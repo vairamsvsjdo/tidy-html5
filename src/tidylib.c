@@ -639,14 +639,11 @@ Bool TIDY_CALL tidyOptCopyConfig( TidyDoc to, TidyDoc from )
 
 /* I/O and Message handling interface
 **
-** By default, Tidy will define, create and use
-** tdocances of input and output handlers for
-** standard C buffered I/O (i.e. FILE* stdin,
-** FILE* stdout and FILE* stderr for content
-** input, content output and diagnostic output,
-** respectively.  A FILE* cfgFile input handler
-** will be used for config files.  Command line
-** options will just be set directly.
+** By default, Tidy will define, create and use instance of input and output 
+** handlers for standard C buffered I/O (i.e. FILE* stdin, FILE* stdout and
+** FILE* stderr for content input, content output and diagnostic output,
+** respectively.  A FILE* cfgFile input handler will be used for config files.
+** Command line options will just be set directly.
 */
 
 /* Use TidyReportFilter to filter messages by diagnostic level:
@@ -665,33 +662,17 @@ Bool TIDY_CALL        tidySetReportFilter( TidyDoc tdoc, TidyReportFilter filt )
   return no;
 }
 
-/* TidyReportFilter2 functions similar to TidyReportFilter, but provides the
-** built-in English format string and va_list so that LibTidy users can use
-** the format string as a lookup key for providing their own error 
-** localizations.
-*/
-Bool TIDY_CALL        tidySetReportFilter2( TidyDoc tdoc, TidyReportFilter2 filt )
-{
-  TidyDocImpl* impl = tidyDocToImpl( tdoc );
-  if ( impl )
-  {
-    impl->mssgFilt2 = filt;
-    return yes;
-  }
-  return no;
-}
-
 /* TidyReportFilter3 functions similar to TidyReportFilter, but provides the
  * string version of the internal enum name so that LibTidy users can use
 ** the string as a lookup key for providing their own error localizations.
 ** See the string key definitions in tidyenum.h.
 */
-Bool TIDY_CALL        tidySetReportFilter3( TidyDoc tdoc, TidyReportFilter3 filt )
+Bool TIDY_CALL        tidySetReportCallback( TidyDoc tdoc, TidyReportCallback filt )
 {
   TidyDocImpl* impl = tidyDocToImpl( tdoc );
   if ( impl )
   {
-    impl->mssgFilt3 = filt;
+    impl->mssgCallback = filt;
     return yes;
   }
   return no;

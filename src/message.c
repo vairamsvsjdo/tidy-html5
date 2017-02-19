@@ -199,27 +199,15 @@ static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
             TidyDoc tdoc = tidyImplToDoc( doc );
             go = doc->mssgFilt( tdoc, level, line, col, messageBuf );
         }
-        if ( doc->mssgFilt2 )
+        if ( doc->mssgCallback )
         {
-            /* mssgFilt2 is intended to allow LibTidy users to localize
-               messages via their own means by providing a key string and
-               the parameters to fill it. For the key string to remain
-               consistent, we have to ensure that we only ever return the
-               built-in English version of this string. */
-            TidyDoc tdoc = tidyImplToDoc( doc );
-            va_end(args_copy);
-            va_copy(args_copy, args);
-            go = go | doc->mssgFilt2( tdoc, level, line, col, tidyDefaultString(code), args_copy );
-        }
-        if ( doc->mssgFilt3 )
-        {
-            /* mssgFilt3 is intended to allow LibTidy users to localize
+            /* mssgCallback is intended to allow LibTidy users to localize
                messages via their own means by providing a key string and
                the parameters to fill it. */
             TidyDoc tdoc = tidyImplToDoc( doc );
             va_end(args_copy);
             va_copy(args_copy, args);
-            go = go | doc->mssgFilt3( tdoc, level, line, col, tidyErrorCodeAsKey(code), args_copy );
+            go = go | doc->mssgCallback( tdoc, level, line, col, tidyErrorCodeAsKey(code), args_copy );
         }
         va_end(args_copy);
     }

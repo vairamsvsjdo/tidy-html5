@@ -564,32 +564,40 @@ TIDY_EXPORT Bool TIDY_CALL tidyInitSink( TidyOutputSink* sink,
 TIDY_EXPORT void TIDY_CALL tidyPutByte( TidyOutputSink* sink, uint byteValue );
 
 
-/****************
-   Errors
-****************/
-/** Callback to filter messages by diagnostic level:
-**  info, warning, etc.  Just set diagnostic output 
-**  handler to redirect all diagnostics output.  Return true
-**  to proceed with output, false to cancel.
+/**********************
+**   Messaging Callbacks
+**  Originally envisioned as filters to suppress or allow the emission of
+**  Tidy's reports, these message callback "filters" allow `LibTidy` API users
+**  to handle Tidy's messages in different and flexible ways. As a simple
+**  filter, each of the callbacks should return true to allow Tidy to proceed
+**  with its own output, or false to prevent output.
+ ***********************/
+
+/** The original report filter provides the callback function an instance of
+**  the tidy document, the TidyReportLevel of the message, the location in the
+**  source text the message refers to, and the localized message. It's a
+**  largely unsophisticated filter, but can be used very easily in other console
+**  implementations because it provides the exact same string that Tidy would
+**  output.
+**
 */
 typedef Bool (TIDY_CALL *TidyReportFilter)( TidyDoc tdoc, TidyReportLevel lvl,
-                                           uint line, uint col, ctmbstr mssg );
+                                            uint line, uint col, ctmbstr mssg );
 
-typedef Bool (TIDY_CALL *TidyReportFilter2)( TidyDoc tdoc, TidyReportLevel lvl,
-                                           uint line, uint col, ctmbstr mssg, va_list args );
-
-typedef Bool (TIDY_CALL *TidyReportFilter3)( TidyDoc tdoc, TidyReportLevel lvl,
-                                                uint line, uint col, ctmbstr code, va_list args );
-
-/** Give Tidy a filter callback to use */
 TIDY_EXPORT Bool TIDY_CALL    tidySetReportFilter( TidyDoc tdoc,
-                                                  TidyReportFilter filtCallback );
+                                                   TidyReportFilter filtCallback );
 
-TIDY_EXPORT Bool TIDY_CALL    tidySetReportFilter2( TidyDoc tdoc,
-                                                  TidyReportFilter2 filtCallback );
+/** The `TidyReportCallback` is a simple filtering mechanism that provides
+**  the TidyDoc instance, the report level, line and column location, as well
+**  as a string code (see `tidyErrorFilterKeyItem` type for applicable codes)
+**  to look up your own strings, and a va_list of arguments that you can use
+**  to fill in your own strings.
+*/
+typedef Bool (TIDY_CALL *TidyReportCallback)( TidyDoc tdoc, TidyReportLevel lvl,
+                                              uint line, uint col, ctmbstr code, va_list args );
 
-TIDY_EXPORT Bool TIDY_CALL    tidySetReportFilter3( TidyDoc tdoc,
-                                                       TidyReportFilter3 filtCallback );
+TIDY_EXPORT Bool TIDY_CALL    tidySetReportCallback( TidyDoc tdoc,
+                                                     TidyReportCallback filtCallback );
 
 /** Set error sink to named file */
 TIDY_EXPORT FILE* TIDY_CALL   tidySetErrorFile( TidyDoc tdoc, ctmbstr errfilnam );

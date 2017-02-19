@@ -810,8 +810,7 @@ typedef enum
  *
  * In order to keep code maintainable and make it simple to add new
  * messages, the `tidyMessageCodes` and `tidyErrorFilterKeysStruct[]`
- * are generated dynamically with preprocessor macros defined below,
- * or in respective modules (e.g., `access.h`).
+ * are generated dynamically with preprocessor macros defined below.
  *
  * Any visible FOREACH_MSG_* macro (including new ones) must be
  * applied to the `tidyMessageCodes` enum with the MAKE_ENUM() macro
