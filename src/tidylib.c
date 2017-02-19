@@ -651,7 +651,7 @@ Bool TIDY_CALL tidyOptCopyConfig( TidyDoc to, TidyDoc from )
 ** handler to redirect all diagnostics output.  Return true
 ** to proceed with output, false to cancel.
 */
-Bool TIDY_CALL        tidySetReportFilter( TidyDoc tdoc, TidyReportFilter filt )
+Bool TIDY_CALL tidySetReportFilter( TidyDoc tdoc, TidyReportFilter filt )
 {
   TidyDocImpl* impl = tidyDocToImpl( tdoc );
   if ( impl )
@@ -662,12 +662,12 @@ Bool TIDY_CALL        tidySetReportFilter( TidyDoc tdoc, TidyReportFilter filt )
   return no;
 }
 
-/* TidyReportFilter3 functions similar to TidyReportFilter, but provides the
+/* tidySetReportCallback functions similar to TidyReportFilter, but provides the
  * string version of the internal enum name so that LibTidy users can use
 ** the string as a lookup key for providing their own error localizations.
 ** See the string key definitions in tidyenum.h.
 */
-Bool TIDY_CALL        tidySetReportCallback( TidyDoc tdoc, TidyReportCallback filt )
+Bool TIDY_CALL tidySetReportCallback( TidyDoc tdoc, TidyReportCallback filt )
 {
   TidyDocImpl* impl = tidyDocToImpl( tdoc );
   if ( impl )
@@ -677,6 +677,25 @@ Bool TIDY_CALL        tidySetReportCallback( TidyDoc tdoc, TidyReportCallback fi
   }
   return no;
 }
+
+Bool TIDY_CALL tidySetMessageCallback( TidyDoc tdoc, TidyMessageCallback filt )
+{
+    TidyDocImpl* impl = tidyDocToImpl( tdoc );
+    if ( impl )
+    {
+        impl->mssgMessageCallback = filt;
+        return yes;
+    }
+    return no;
+}
+
+ctmbstr TIDY_CALL tidyMessageGetLocalizedMessage( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(MessageGetLocalizedMessage)(*message);
+}
+
+
 
 #if 0   /* Not yet */
 int         tidySetContentOutputSink( TidyDoc tdoc, TidyOutputSink* outp )

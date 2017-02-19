@@ -81,6 +81,15 @@ void TY_(NeedsAuthorIntervention)( TidyDocImpl* doc );
 void TY_(ReportNumWarnings)( TidyDocImpl* doc );
 
 
+/** @name Report and Dialogue API */
+/** @{ */
+
+/** Get the message as Tidy would emit it in the currently-set localization. */
+ctmbstr TY_(MessageGetLocalizedMessage)( TidyMessageImpl message );
+
+/** @} */
+
+
 /** @name Key Discovery */
 /** @{ */
 

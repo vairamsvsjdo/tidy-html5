@@ -35,6 +35,32 @@ ctmbstr TY_(tidyLibraryVersion)(void)
 
 
 /*********************************************************************
+ * Modern Message Callback Functions
+ *********************************************************************/
+
+/** Create an internal representation of a Tidy message with some of
+**  the basic information that that we currently know about the message.
+**  The function signature doesn't have to stay static and is a good place
+**  to add instantiation if expanding the API, or simply access the
+**  members directly after creation.
+*/
+static TidyMessageImpl* tidyMessageCreate( TidyDoc tdoc, ctmbstr message )
+{
+    TidyMessageImpl *result = TidyDocAlloc(tidyDocToImpl(tdoc), sizeof(TidyMessageImpl));
+
+    result->tidyDoc = tdoc;
+    result->message = message;
+
+    return result;
+}
+
+ctmbstr TY_(MessageGetLocalizedMessage)( TidyMessageImpl message )
+{
+    return message.message;
+}
+
+
+/*********************************************************************
  * General Message Utility Functions
  * These static functions only serve as utilities for `messagePos()`
  * within this module.
@@ -165,7 +191,10 @@ static void NtoS(int n, tmbstr str)
  * General Message Writing Functions
  * These mid-level output routines emit reports, execute callbacks
  * if applicable, and keep track of error and warning counts, as well
- * as dialogue information.
+ * as dialogue information. TODO: probably we will want to refactor
+ * parts of this to accept a TidyMessage type as input, so that
+ * any other parts of the code that want to add information to it
+ * can do so.
  *********************************************************************/
 
 /* (forward) Performs final, formatted output to the output buffer,
@@ -182,68 +211,89 @@ static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
                         int line, int col, ctmbstr msg, va_list args )
 {
     enum { sizeMessageBuf=2048 };
-    char *messageBuf = TidyDocAlloc(doc,sizeMessageBuf);
-    Bool go = UpdateCount( doc, level );
+    char *messageComplete = TidyDocAlloc(doc, sizeMessageBuf);  /* report output */
+    char *messagePosition = TidyDocAlloc(doc, sizeMessageBuf);  /* position part */
+    char *messagePrefix = TidyDocAlloc(doc, sizeMessageBuf);    /* prefix part */
+    char *messageMessage = TidyDocAlloc(doc, sizeMessageBuf);   /* message part */
+    va_list args_copy;
+    Bool go = yes;
 
-    if ( go )
+
+    /* Build the complete message from the smaller parts before deciding
+       what do do with it, e.g., from filters or from `UpdateCount`. */
+
+    if ( line > 0 && col > 0 )
+        ReportPosition(doc, line, col, messagePosition, sizeMessageBuf);
+    else
+        *messagePosition = '\0';
+
+    LevelPrefix( level, messagePrefix, sizeMessageBuf );
+
+    va_copy(args_copy, args);
+    TY_(tmbvsnprintf)(messageMessage, sizeMessageBuf, msg, args_copy);
+    va_end(args_copy);
+
+    TY_(tmbsnprintf)(messageComplete, sizeMessageBuf, "%s%s%s", messagePosition, messagePrefix, messageMessage);
+
+
+    /* Always allow the filters a chance at messages, and a chance to block. */
+
+    if ( doc->mssgFilt )
     {
-        va_list args_copy;
+        /* mssgFilt is a simple error filter that provides minimal information
+           to callback functions, and includes the message buffer in LibTidy's
+           configured localization.
+         */
+        TidyDoc tdoc = tidyImplToDoc( doc );
+        go = go & doc->mssgFilt( tdoc, level, line, col, messageMessage );
+    }
+
+    if ( doc->mssgCallback )
+    {
+        /* mssgCallback is intended to allow LibTidy users to localize messages
+           via their own means by providing a key and the parameters to fill it. */
+        TidyDoc tdoc = tidyImplToDoc( doc );
         va_copy(args_copy, args);
-        TY_(tmbvsnprintf)(messageBuf, sizeMessageBuf, msg, args_copy);
-        if ( doc->mssgFilt )
-        {
-            /* mssgFilt is a simple error filter that provides minimal
-               information to callback functions, and includes the message
-               buffer in LibTidy's configured localization.
-             */
-            TidyDoc tdoc = tidyImplToDoc( doc );
-            go = doc->mssgFilt( tdoc, level, line, col, messageBuf );
-        }
-        if ( doc->mssgCallback )
-        {
-            /* mssgCallback is intended to allow LibTidy users to localize
-               messages via their own means by providing a key string and
-               the parameters to fill it. */
-            TidyDoc tdoc = tidyImplToDoc( doc );
-            va_end(args_copy);
-            va_copy(args_copy, args);
-            go = go | doc->mssgCallback( tdoc, level, line, col, tidyErrorCodeAsKey(code), args_copy );
-        }
+        go = go & doc->mssgCallback( tdoc, level, line, col, tidyErrorCodeAsKey(code), args_copy );
         va_end(args_copy);
     }
 
+    if ( doc->mssgMessageCallback )
+    {
+        /* mssgMessageCallback is the newest interface to interrogate Tidy's
+         emitted messages. */
+        TidyDoc tdoc = tidyImplToDoc( doc );
+        TidyMessageImpl *message = tidyMessageCreate( tdoc, messageComplete );
+        TidyMessage tmessage = tidyImplToMessage(message);
+        go = go & doc->mssgMessageCallback( tmessage );
+        free(message);
+        tmessage = NULL;
+        message = NULL;
+    }
+
+
+    /* Allow UpdateCount a further chance to block emission of message. */
+    go = go & UpdateCount( doc, level );
+
+
+    /* Finally, output the message if applicable. */
+
     if ( go )
     {
-        enum { sizeBuf=1024 };
         TidyOutputSink *outp = &doc->errout->sink;
-        char *buf = (char *)TidyDocAlloc(doc,sizeBuf);
         const char *cp;
         byte b;
-        if ( line > 0 && col > 0 )
-        {
-            ReportPosition(doc, line, col, buf, sizeBuf);
-            for ( cp = buf; *cp; ++cp )
-            {
-                b = (*cp & 0xff);
-                outp->putByte( outp->sinkData, b );
-            }
-        }
-
-        LevelPrefix( level, buf, sizeBuf );
-        for ( cp = buf; *cp; ++cp )
-        {
-            b = (*cp & 0xff);
-            outp->putByte( outp->sinkData, b );
-        }
-        for ( cp = messageBuf; *cp; ++cp )
+        for ( cp = messageComplete; *cp; ++cp )
         {
             b = (*cp & 0xff);
             outp->putByte( outp->sinkData, b );
         }
         TY_(WriteChar)( '\n', doc->errout );
-        TidyDocFree(doc, buf);
     }
-    TidyDocFree(doc, messageBuf);
+    TidyDocFree(doc, messageComplete);
+    TidyDocFree(doc, messagePosition);
+    TidyDocFree(doc, messagePrefix);
+    TidyDocFree(doc, messageMessage);
 }
 
 

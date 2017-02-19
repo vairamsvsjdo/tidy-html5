@@ -58,6 +58,7 @@ struct _TidyDocImpl
     StreamOut*          errout;
     TidyReportFilter    mssgFilt;
     TidyReportCallback  mssgCallback;
+    TidyMessageCallback mssgMessageCallback;
     TidyOptCallback     pOptCallback;
     TidyPPProgress      progressCallback;
 
@@ -95,6 +96,12 @@ struct _TidyDocImpl
     tmbstr              givenDoctype;
 };
 
+struct _TidyMessageImpl
+{
+    TidyDoc             tidyDoc;     /* document instance this message is attributed to */
+    ctmbstr             message;     /* the default message in the current localization */
+};
+
 
 /* Twizzle internal/external types */
 #ifdef NEVER
@@ -111,17 +118,20 @@ const TidyOptionImpl* tidyOptionToImpl( TidyOption topt );
 TidyOption   tidyImplToOption( const TidyOptionImpl* option );
 #else
 
-#define tidyDocToImpl( tdoc )       ((TidyDocImpl*)(tdoc))
-#define tidyImplToDoc( doc )        ((TidyDoc)(doc))
+#define tidyDocToImpl( tdoc )           ((TidyDocImpl*)(tdoc))
+#define tidyImplToDoc( doc )            ((TidyDoc)(doc))
 
-#define tidyNodeToImpl( tnod )      ((Node*)(tnod))
-#define tidyImplToNode( node )      ((TidyNode)(node))
+#define tidyMessageToImpl( tmessage )   ((TidyMessageImpl*)(tmessage))
+#define tidyImplToMessage( message )    ((TidyMessage)(message))
 
-#define tidyAttrToImpl( tattr )     ((AttVal*)(tattr))
-#define tidyImplToAttr( attval )    ((TidyAttr)(attval))
+#define tidyNodeToImpl( tnod )          ((Node*)(tnod))
+#define tidyImplToNode( node )          ((TidyNode)(node))
 
-#define tidyOptionToImpl( topt )    ((const TidyOptionImpl*)(topt))
-#define tidyImplToOption( option )  ((TidyOption)(option))
+#define tidyAttrToImpl( tattr )         ((AttVal*)(tattr))
+#define tidyImplToAttr( attval )        ((TidyAttr)(attval))
+
+#define tidyOptionToImpl( topt )        ((const TidyOptionImpl*)(topt))
+#define tidyImplToOption( option )      ((TidyOption)(option))
 
 #endif
 

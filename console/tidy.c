@@ -1514,6 +1514,23 @@ static void unknownOption( uint c )
 
 
 /**
+ **  This callback from LibTidy allows the console application to examine an
+ **  error message before allowing LibTidy to display it. Currently we're
+ **  outputting the message ourselves, and telling LibTidy not to. In the future
+ **  this callback might do things like buffer all of the report messages and
+ **  sort them, or allow user-defined filtering.
+ */
+static Bool reportCallback(TidyMessage tmessage)
+{
+    ctmbstr output = tidyMessageGetLocalizedMessage( tmessage );
+    printf("%s\n", output);
+
+    return no; /* suppress LibTidy's own output of this message */
+}
+
+
+
+/**
  **  MAIN --  let's do something here.
  */
 int main( int argc, char** argv )
@@ -1521,6 +1538,7 @@ int main( int argc, char** argv )
     ctmbstr prog = argv[0];
     ctmbstr cfgfil = NULL, errfil = NULL, htmlfil = NULL;
     TidyDoc tdoc = tidyCreate();
+    tidySetMessageCallback( tdoc, reportCallback);
     int status = 0;
     tmbstr locale = NULL;
 

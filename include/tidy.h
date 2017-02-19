@@ -96,6 +96,11 @@ opaque_type( TidyNode );
 */
 opaque_type( TidyAttr );
 
+/** @struct TidyMessage
+**  Opaque messsage record datatype
+*/
+opaque_type( TidyMessage );
+
 /** @} end Opaque group */
 
 
@@ -565,13 +570,13 @@ TIDY_EXPORT void TIDY_CALL tidyPutByte( TidyOutputSink* sink, uint byteValue );
 
 
 /**********************
-**   Messaging Callbacks
+**  Messaging Callbacks
 **  Originally envisioned as filters to suppress or allow the emission of
 **  Tidy's reports, these message callback "filters" allow `LibTidy` API users
 **  to handle Tidy's messages in different and flexible ways. As a simple
 **  filter, each of the callbacks should return true to allow Tidy to proceed
 **  with its own output, or false to prevent output.
- ***********************/
+************************/
 
 /** The original report filter provides the callback function an instance of
 **  the tidy document, the TidyReportLevel of the message, the location in the
@@ -584,8 +589,8 @@ TIDY_EXPORT void TIDY_CALL tidyPutByte( TidyOutputSink* sink, uint byteValue );
 typedef Bool (TIDY_CALL *TidyReportFilter)( TidyDoc tdoc, TidyReportLevel lvl,
                                             uint line, uint col, ctmbstr mssg );
 
-TIDY_EXPORT Bool TIDY_CALL    tidySetReportFilter( TidyDoc tdoc,
-                                                   TidyReportFilter filtCallback );
+TIDY_EXPORT Bool TIDY_CALL tidySetReportFilter( TidyDoc tdoc,
+                                                TidyReportFilter filtCallback );
 
 /** The `TidyReportCallback` is a simple filtering mechanism that provides
 **  the TidyDoc instance, the report level, line and column location, as well
@@ -596,15 +601,40 @@ TIDY_EXPORT Bool TIDY_CALL    tidySetReportFilter( TidyDoc tdoc,
 typedef Bool (TIDY_CALL *TidyReportCallback)( TidyDoc tdoc, TidyReportLevel lvl,
                                               uint line, uint col, ctmbstr code, va_list args );
 
-TIDY_EXPORT Bool TIDY_CALL    tidySetReportCallback( TidyDoc tdoc,
-                                                     TidyReportCallback filtCallback );
+TIDY_EXPORT Bool TIDY_CALL tidySetReportCallback( TidyDoc tdoc,
+                                                  TidyReportCallback filtCallback );
+
+/** The `TidyMessageCallback` is an advanced filtering mechanism that provides
+**  great flexibility and exposure to reports and dialogue emitted by Tidy.
+**  it returns only the opaque type `TidyMessage` which can be queried with the
+**  message callback API, below. Note that unlike the older filters, this
+**  callback exposes *all* output that `LibTidy` emits (excluding the console
+**  application, which is a client of `LibTidy`).
+*/
+typedef Bool (TIDY_CALL *TidyMessageCallback)( TidyMessage tmessage );
+
+TIDY_EXPORT Bool TIDY_CALL tidySetMessageCallback( TidyDoc tdoc,
+                                                   TidyMessageCallback filtCallback );
+
 
 /** Set error sink to named file */
-TIDY_EXPORT FILE* TIDY_CALL   tidySetErrorFile( TidyDoc tdoc, ctmbstr errfilnam );
+TIDY_EXPORT FILE* TIDY_CALL tidySetErrorFile( TidyDoc tdoc, ctmbstr errfilnam );
 /** Set error sink to given buffer */
-TIDY_EXPORT int TIDY_CALL     tidySetErrorBuffer( TidyDoc tdoc, TidyBuffer* errbuf );
+TIDY_EXPORT int TIDY_CALL tidySetErrorBuffer( TidyDoc tdoc, TidyBuffer* errbuf );
 /** Set error sink to given generic sink */
-TIDY_EXPORT int TIDY_CALL     tidySetErrorSink( TidyDoc tdoc, TidyOutputSink* sink );
+TIDY_EXPORT int TIDY_CALL tidySetErrorSink( TidyDoc tdoc, TidyOutputSink* sink );
+
+
+/***************************
+** TidyMessageCallback API
+** When using `TidyMessageCallback` you will be supplied with a valid
+** TidyMessage object. This object can be interrogated with the following
+** API before the callback returns. Upon returning from the callback, this
+** object is destroyed so do not attempt to keep it around.
+****************************/
+
+/** Get the message as Tidy would emit it in the currently-set localization. */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyMessageGetLocalizedMessage( TidyMessage tmessage );
 
 
 /****************
