@@ -633,8 +633,11 @@ TIDY_EXPORT int TIDY_CALL tidySetErrorSink( TidyDoc tdoc, TidyOutputSink* sink )
 ** object is destroyed so do not attempt to keep it around.
 ****************************/
 
+/** Get the message as Tidy would emit it in the default localization. */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageOutputDefault( TidyMessage tmessage );
+
 /** Get the message as Tidy would emit it in the currently-set localization. */
-TIDY_EXPORT ctmbstr TIDY_CALL tidyMessageGetLocalizedMessage( TidyMessage tmessage );
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageOutput( TidyMessage tmessage );
 
 
 /****************

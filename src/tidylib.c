@@ -689,12 +689,17 @@ Bool TIDY_CALL tidySetMessageCallback( TidyDoc tdoc, TidyMessageCallback filt )
     return no;
 }
 
-ctmbstr TIDY_CALL tidyMessageGetLocalizedMessage( TidyMessage tmessage )
+ctmbstr TIDY_CALL tidyGetMessageOutputDefault( TidyMessage tmessage )
 {
     TidyMessageImpl *message = tidyMessageToImpl(tmessage);
-    return TY_(MessageGetLocalizedMessage)(*message);
+    return TY_(getMessageOutputDefault)(*message);
 }
 
+ctmbstr TIDY_CALL tidyGetMessageOutput( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessageOutput)(*message);
+}
 
 
 #if 0   /* Not yet */

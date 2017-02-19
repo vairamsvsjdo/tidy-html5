@@ -35,28 +35,170 @@ ctmbstr TY_(tidyLibraryVersion)(void)
 
 
 /*********************************************************************
- * Modern Message Callback Functions
+ * Tidy Message Object Support
  *********************************************************************/
 
-/** Create an internal representation of a Tidy message with some of
-**  the basic information that that we currently know about the message.
-**  The function signature doesn't have to stay static and is a good place
-**  to add instantiation if expanding the API, or simply access the
-**  members directly after creation.
+/** Create an internal representation of a Tidy message with all of
+**  the information that that we know about the message.
+**  
+**  The function signature doesn't have to stay static and is a good
+**  place to add instantiation if expanding the API.
+**
+**  We currently know the doc, node, code, line, column, level, and
+**  args, will pre-calculate all of the other members upon creation.
+**  This ensures that we can use members directly, immediately,
+**  without having to use accessors internally.
 */
-static TidyMessageImpl* tidyMessageCreate( TidyDoc tdoc, ctmbstr message )
+static TidyMessageImpl *tidyMessageCreate( TidyDocImpl *doc, Node *node,
+                                           uint code, int line, int column,
+                                           TidyReportLevel level, va_list args )
 {
-    TidyMessageImpl *result = TidyDocAlloc(tidyDocToImpl(tdoc), sizeof(TidyMessageImpl));
+    TidyMessageImpl *result = TidyDocAlloc(doc, sizeof(TidyMessageImpl));
+    va_list args_copy;
+    enum { sizeMessageBuf=2048 };
+    ctmbstr pattern;
 
-    result->tidyDoc = tdoc;
-    result->message = message;
+    /* Things we know... */
+    
+    result->tidyDoc = doc;
+    result->tidyNode = node;
+    result->code = code;
+    result->line = line;
+    result->column = column;
+    result->level = level;
+    
+    /* (here we will do something with args) */
+
+    /* Things we create... */
+
+    result->messageKey = TY_(tidyErrorCodeAsKey)(code);
+    
+    result->messageFormatDefault = tidyDefaultString(code);
+    result->messageFormat = tidyLocalizedString(code);
+
+    result->messageDefault = TidyDocAlloc(doc, sizeMessageBuf);
+    va_copy(args_copy, args);
+    TY_(tmbvsnprintf)(result->messageDefault, sizeMessageBuf, result->messageFormatDefault, args_copy);
+    va_end(args_copy);
+
+    result->message = TidyDocAlloc(doc, sizeMessageBuf);
+    va_copy(args_copy, args);
+    TY_(tmbvsnprintf)(result->message, sizeMessageBuf, result->messageFormat, args_copy);
+    va_end(args_copy);
+
+    result->messagePosDefault = TidyDocAlloc(doc, sizeMessageBuf);
+    result->messagePos = TidyDocAlloc(doc, sizeMessageBuf);
+    
+    if ( cfgBool(doc, TidyEmacs) && cfgStr(doc, TidyEmacsFile) )
+    {
+        /* Change formatting to be parsable by GNU Emacs */
+        TY_(tmbsnprintf)(result->messagePosDefault, sizeMessageBuf, "%s:%d:%d: ", cfgStr(doc, TidyEmacsFile), line, column);
+        TY_(tmbsnprintf)(result->messagePos, sizeMessageBuf, "%s:%d:%d: ", cfgStr(doc, TidyEmacsFile), line, column);
+    }
+    else
+    {
+        /* traditional format */
+        TY_(tmbsnprintf)(result->messagePosDefault, sizeMessageBuf, tidyDefaultString(LINE_COLUMN_STRING), line, column);
+        TY_(tmbsnprintf)(result->messagePos, sizeMessageBuf, tidyLocalizedString(LINE_COLUMN_STRING), line, column);
+    }
+    
+    result->messagePrefixDefault = tidyDefaultString(level);
+
+    result->messagePrefix = tidyLocalizedString(level);
+    
+    if ( line > 0 && column > 0 )
+        pattern = "%s%s%s";
+    else
+        pattern = "%.0s%s%s";
+        
+    result->messageOutputDefault = TidyDocAlloc(doc, sizeMessageBuf);
+    TY_(tmbsnprintf)(result->messageOutputDefault, sizeMessageBuf, pattern,
+                     result->messagePosDefault, result->messagePrefixDefault,
+                     result->messageDefault);
+
+    result->messageOutput = TidyDocAlloc(doc, sizeMessageBuf);
+    TY_(tmbsnprintf)(result->messageOutput, sizeMessageBuf, pattern,
+                     result->messagePos, result->messagePrefix,
+                     result->message);
+
 
     return result;
 }
 
-ctmbstr TY_(MessageGetLocalizedMessage)( TidyMessageImpl message )
+/** Because instances of TidyMessage retain memory, they must be released
+**  when we're done with them.
+*/
+static void tidyMessageRelease( TidyMessageImpl message )
+{
+    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageDefault );
+    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.message );
+    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messagePosDefault );
+    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messagePos );
+    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageOutputDefault );
+    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageOutput );
+}
+
+
+/*********************************************************************
+ * Modern Message Callback Functions
+ * In addition to being exposed to the API, they are used internally
+ * to produce the required strings as needed.
+ *********************************************************************/
+
+ctmbstr TY_(getMessageKey)( TidyMessageImpl message )
+{
+    return message.messageKey;
+}
+
+ctmbstr TY_(getMessageFormatDefault)( TidyMessageImpl message )
+{
+    return message.messageFormatDefault;
+}
+
+ctmbstr TY_(getMessageFormat)( TidyMessageImpl message )
+{
+    return message.messageFormat;
+}
+
+ctmbstr TY_(getMessageDefault)( TidyMessageImpl message )
+{
+    return message.messageDefault;
+}
+
+ctmbstr TY_(getMessage)( TidyMessageImpl message )
 {
     return message.message;
+}
+
+ctmbstr TY_(getMessagePosDefault)( TidyMessageImpl message )
+{
+    return message.messagePosDefault;
+}
+
+ctmbstr TY_(getMessagePos)( TidyMessageImpl message )
+{
+    return message.messagePos;
+}
+
+ctmbstr TY_(getMessagePrefixDefault)( TidyMessageImpl message )
+{
+    return message.messagePrefixDefault;
+}
+
+ctmbstr TY_(getMessagePrefix)( TidyMessageImpl message )
+{
+    return message.messagePrefix;
+}
+
+
+ctmbstr TY_(getMessageOutputDefault)( TidyMessageImpl message )
+{
+    return message.messageOutputDefault;
+}
+
+ctmbstr TY_(getMessageOutput)( TidyMessageImpl message )
+{
+    return message.messageOutput;
 }
 
 
@@ -66,18 +208,7 @@ ctmbstr TY_(MessageGetLocalizedMessage)( TidyMessageImpl message )
  * within this module.
  *********************************************************************/
 
-/* Generates the prefix string for message reports based on each
-** message's `TidyReportLevel`.
-*/
-static char* LevelPrefix( TidyReportLevel level, char* buf, size_t count )
-{
-  *buf = 0;
-  TY_(tmbstrncpy)( buf, tidyLocalizedString(level), count );
-  return buf + TY_(tmbstrlen)( buf );
-}
-
-
-/* Updates document message counts and compares counts to options to 
+/* Updates document message counts and compares counts to options to
 ** see if message display should go forward.
 */
 static Bool UpdateCount( TidyDocImpl* doc, TidyReportLevel level )
@@ -112,23 +243,6 @@ static Bool UpdateCount( TidyDocImpl* doc, TidyReportLevel level )
   }
 
   return go;
-}
-
-
-/* Generates the string indicating the source document position for which
-** Tidy has generated a message.
-*/
-static char* ReportPosition(TidyDocImpl* doc, int line, int col, char* buf, size_t count)
-{
-    *buf = 0;
-
-    /* Change formatting to be parsable by GNU Emacs */
-    if ( cfgBool(doc, TidyEmacs) && cfgStr(doc, TidyEmacsFile) )
-        TY_(tmbsnprintf)(buf, count, "%s:%d:%d: ", 
-                         cfgStr(doc, TidyEmacsFile), line, col);
-    else /* traditional format */
-        TY_(tmbsnprintf)(buf, count, tidyLocalizedString(LINE_COLUMN_STRING), line, col);
-    return buf + TY_(tmbstrlen)( buf );
 }
 
 
@@ -210,65 +324,42 @@ __attribute__((format(printf, 6, 0)))
 static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
                         int line, int col, ctmbstr msg, va_list args )
 {
-    enum { sizeMessageBuf=2048 };
-    char *messageComplete = TidyDocAlloc(doc, sizeMessageBuf);  /* report output */
-    char *messagePosition = TidyDocAlloc(doc, sizeMessageBuf);  /* position part */
-    char *messagePrefix = TidyDocAlloc(doc, sizeMessageBuf);    /* prefix part */
-    char *messageMessage = TidyDocAlloc(doc, sizeMessageBuf);   /* message part */
+    TidyMessageImpl *message;
     va_list args_copy;
     Bool go = yes;
 
-
-    /* Build the complete message from the smaller parts before deciding
-       what do do with it, e.g., from filters or from `UpdateCount`. */
-
-    if ( line > 0 && col > 0 )
-        ReportPosition(doc, line, col, messagePosition, sizeMessageBuf);
-    else
-        *messagePosition = '\0';
-
-    LevelPrefix( level, messagePrefix, sizeMessageBuf );
-
+    /* Create a message object with our inputs. TODO: eliminate this
+       whole function later, and use this object directly. */
     va_copy(args_copy, args);
-    TY_(tmbvsnprintf)(messageMessage, sizeMessageBuf, msg, args_copy);
+    message = tidyMessageCreate(doc, NULL, code, line, col, level, args_copy);
     va_end(args_copy);
-
-    TY_(tmbsnprintf)(messageComplete, sizeMessageBuf, "%s%s%s", messagePosition, messagePrefix, messageMessage);
-
-
-    /* Always allow the filters a chance at messages, and a chance to block. */
-
+    
+    
+    /* mssgFilt is a simple error filter that provides minimal information
+       to callback functions, and includes the message buffer in LibTidy's
+       configured localization.
+     */
     if ( doc->mssgFilt )
     {
-        /* mssgFilt is a simple error filter that provides minimal information
-           to callback functions, and includes the message buffer in LibTidy's
-           configured localization.
-         */
         TidyDoc tdoc = tidyImplToDoc( doc );
-        go = go & doc->mssgFilt( tdoc, level, line, col, messageMessage );
+        go = go & doc->mssgFilt( tdoc, level, line, col, message->messageOutput );
     }
 
+    /* mssgCallback is intended to allow LibTidy users to localize messages
+       via their own means by providing a key and the parameters to fill it. */
     if ( doc->mssgCallback )
     {
-        /* mssgCallback is intended to allow LibTidy users to localize messages
-           via their own means by providing a key and the parameters to fill it. */
         TidyDoc tdoc = tidyImplToDoc( doc );
         va_copy(args_copy, args);
         go = go & doc->mssgCallback( tdoc, level, line, col, tidyErrorCodeAsKey(code), args_copy );
         va_end(args_copy);
     }
 
+    /* mssgMessageCallback is the newest interface to interrogate Tidy's
+       emitted messages. */
     if ( doc->mssgMessageCallback )
     {
-        /* mssgMessageCallback is the newest interface to interrogate Tidy's
-         emitted messages. */
-        TidyDoc tdoc = tidyImplToDoc( doc );
-        TidyMessageImpl *message = tidyMessageCreate( tdoc, messageComplete );
-        TidyMessage tmessage = tidyImplToMessage(message);
-        go = go & doc->mssgMessageCallback( tmessage );
-        free(message);
-        tmessage = NULL;
-        message = NULL;
+        go = go & doc->mssgMessageCallback( tidyImplToMessage(message) );
     }
 
 
@@ -283,17 +374,14 @@ static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
         TidyOutputSink *outp = &doc->errout->sink;
         const char *cp;
         byte b;
-        for ( cp = messageComplete; *cp; ++cp )
+        for ( cp = message->messageOutput; *cp; ++cp )
         {
             b = (*cp & 0xff);
             outp->putByte( outp->sinkData, b );
         }
         TY_(WriteChar)( '\n', doc->errout );
     }
-    TidyDocFree(doc, messageComplete);
-    TidyDocFree(doc, messagePosition);
-    TidyDocFree(doc, messagePrefix);
-    TidyDocFree(doc, messageMessage);
+    tidyMessageRelease(*message);
 }
 
 

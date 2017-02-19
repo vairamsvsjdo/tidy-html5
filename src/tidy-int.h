@@ -96,10 +96,37 @@ struct _TidyDocImpl
     tmbstr              givenDoctype;
 };
 
+/** The basic struct for communicating a message within LibTidy. All of the
+**  relevant information pertaining to a message can be retrieved with the
+**  accessor functions and one of these records.
+*/
 struct _TidyMessageImpl
 {
-    TidyDoc             tidyDoc;     /* document instance this message is attributed to */
-    ctmbstr             message;     /* the default message in the current localization */
+    TidyDocImpl         *tidyDoc;    /* document instance this message is attributed to */
+    Node                *tidyNode;   /* the node reporting the message, if applicable */
+    uint                code;        /* the message code */
+    int                 line;        /* the line message applies to */
+    int                 column;      /* the column the message applies to */
+    TidyReportLevel     level;       /* the severity level of the message */
+    
+    /* (some structure for args will exist here) */
+
+    ctmbstr             messageKey;             /* the message code as a key string */
+
+    ctmbstr             messageFormatDefault;   /* the built-in format string */
+    ctmbstr             messageFormat;          /* the localized format string */
+
+    tmbstr              messageDefault;         /* the message, formatted, default language */
+    tmbstr              message;                /* the message, formatted, localized */
+
+    tmbstr              messagePosDefault;      /* the position part, default language */
+    tmbstr              messagePos;             /* the position part, localized */
+
+    ctmbstr             messagePrefixDefault;   /* the prefix part, default language */
+    ctmbstr             messagePrefix;          /* the prefix part, localized */
+    
+    tmbstr              messageOutputDefault;   /* the complete string Tidy would output */
+    tmbstr              messageOutput;          /* the complete string, localized */
 };
 
 

@@ -1522,7 +1522,7 @@ static void unknownOption( uint c )
  */
 static Bool reportCallback(TidyMessage tmessage)
 {
-    ctmbstr output = tidyMessageGetLocalizedMessage( tmessage );
+    ctmbstr output = tidyGetMessageOutput( tmessage );
     printf("%s\n", output);
 
     return no; /* suppress LibTidy's own output of this message */

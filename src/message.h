@@ -85,7 +85,37 @@ void TY_(ReportNumWarnings)( TidyDocImpl* doc );
 /** @{ */
 
 /** Get the message as Tidy would emit it in the currently-set localization. */
-ctmbstr TY_(MessageGetLocalizedMessage)( TidyMessageImpl message );
+ctmbstr TY_(getMessageKey)( TidyMessageImpl message );
+
+/* the built-in format string */
+ctmbstr TY_(getMessageFormatDefault)( TidyMessageImpl message );
+
+/* the localized format string */
+ctmbstr TY_(getMessageFormat)( TidyMessageImpl message );
+
+/* the message, formatted, default language */
+ctmbstr TY_(getMessageDefault)( TidyMessageImpl message );
+
+/* the message, formatted, localized */
+ctmbstr TY_(getMessage)( TidyMessageImpl message );
+
+/* the position part, default language */
+ctmbstr TY_(getMessagePosDefault)( TidyMessageImpl message );
+
+/* the position part, localized */
+ctmbstr TY_(getMessagePos)( TidyMessageImpl message );
+
+/* the prefix part, default language */
+ctmbstr TY_(getMessagePrefixDefault)( TidyMessageImpl message );
+
+/* the prefix part, localized */
+ctmbstr TY_(getMessagePrefix)( TidyMessageImpl message );
+
+/* the complete message, as would be output in the CLI */
+ctmbstr TY_(getMessageOutputDefault)( TidyMessageImpl message );
+
+/* the complete message, as would be output in the CLI, localized */
+ctmbstr TY_(getMessageOutput)( TidyMessageImpl message );
 
 /** @} */
 
