@@ -204,8 +204,6 @@ ctmbstr TY_(getMessageOutput)( TidyMessageImpl message )
 
 /*********************************************************************
  * General Message Utility Functions
- * These static functions only serve as utilities for `messagePos()`
- * within this module.
  *********************************************************************/
 
 /* Updates document message counts and compares counts to options to
@@ -245,10 +243,6 @@ static Bool UpdateCount( TidyDocImpl* doc, TidyReportLevel level )
   return go;
 }
 
-
-/*********************************************************************
- * Other Utilities
- *********************************************************************/
 
 /* Returns the given node's tag as a string. */
 static char* TagToString(Node* tag, char* buf, size_t count)
@@ -365,10 +359,12 @@ static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
 
     /* Allow UpdateCount a further chance to block emission of message. */
     go = go & UpdateCount( doc, level );
+    
+    /* And if we're suppressing TidyInfo, then block emission. */
+    go = go & !(level == TidyInfo && !cfgBool(doc, TidyShowInfo));
 
 
     /* Finally, output the message if applicable. */
-
     if ( go )
     {
         TidyOutputSink *outp = &doc->errout->sink;
@@ -425,7 +421,6 @@ void message( TidyDocImpl* doc, TidyReportLevel level, uint code,
               ctmbstr msg, ... )
 {
     va_list args;
-    if (level == TidyInfo && !cfgBool(doc, TidyShowInfo)) return;
     va_start( args, msg );
     messagePos( doc, level, code, 0, 0, msg, args );
     va_end( args );

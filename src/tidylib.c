@@ -689,6 +689,61 @@ Bool TIDY_CALL tidySetMessageCallback( TidyDoc tdoc, TidyMessageCallback filt )
     return no;
 }
 
+ctmbstr TIDY_CALL tidyGetMessageKey( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessageKey)(*message);
+}
+
+ctmbstr TIDY_CALL tidyGetMessageFormatDefault( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessageFormatDefault)(*message);
+}
+
+ctmbstr TIDY_CALL tidyGetMessageFormat( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessageFormat)(*message);
+}
+
+ctmbstr TIDY_CALL tidyGetMessageDefault( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessageDefault)(*message);
+}
+
+ctmbstr TIDY_CALL tidyGetMessage( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessage)(*message);
+}
+
+ctmbstr TIDY_CALL tidyGetMessagePosDefault( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessagePosDefault)(*message);
+}
+
+ctmbstr TIDY_CALL tidyGetMessagePos( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessagePos)(*message);
+}
+
+ctmbstr TIDY_CALL tidyGetMessagePrefixDefault( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessagePrefixDefault)(*message);
+}
+
+ctmbstr TIDY_CALL tidyGetMessagePrefix( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessagePrefix)(*message);
+}
+
+
 ctmbstr TIDY_CALL tidyGetMessageOutputDefault( TidyMessage tmessage )
 {
     TidyMessageImpl *message = tidyMessageToImpl(tmessage);

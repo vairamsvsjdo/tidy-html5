@@ -633,6 +633,33 @@ TIDY_EXPORT int TIDY_CALL tidySetErrorSink( TidyDoc tdoc, TidyOutputSink* sink )
 ** object is destroyed so do not attempt to keep it around.
 ****************************/
 
+/** get the message key string. */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageKey( TidyMessage tmessage );
+
+/** the built-in format string */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageFormatDefault( TidyMessage tmessage );
+
+/** the localized format string */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageFormat( TidyMessage tmessage );
+
+/** the message, formatted, default language */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageDefault( TidyMessage tmessage );
+
+/** the message, formatted, localized */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessage( TidyMessage tmessage );
+
+/** the position part, default language */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessagePosDefault( TidyMessage tmessage );
+
+/** the position part, localized */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessagePos( TidyMessage tmessage );
+
+/** the prefix part, default language */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessagePrefixDefault( TidyMessage tmessage );
+
+/** the prefix part, localized */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessagePrefix( TidyMessage tmessage );
+
 /** Get the message as Tidy would emit it in the default localization. */
 TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageOutputDefault( TidyMessage tmessage );
 

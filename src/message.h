@@ -84,34 +84,34 @@ void TY_(ReportNumWarnings)( TidyDocImpl* doc );
 /** @name Report and Dialogue API */
 /** @{ */
 
-/** Get the message as Tidy would emit it in the currently-set localization. */
+/** get the message key string. */
 ctmbstr TY_(getMessageKey)( TidyMessageImpl message );
 
-/* the built-in format string */
+/** the built-in format string */
 ctmbstr TY_(getMessageFormatDefault)( TidyMessageImpl message );
 
-/* the localized format string */
+/** the localized format string */
 ctmbstr TY_(getMessageFormat)( TidyMessageImpl message );
 
-/* the message, formatted, default language */
+/** the message, formatted, default language */
 ctmbstr TY_(getMessageDefault)( TidyMessageImpl message );
 
-/* the message, formatted, localized */
+/** the message, formatted, localized */
 ctmbstr TY_(getMessage)( TidyMessageImpl message );
 
-/* the position part, default language */
+/** the position part, default language */
 ctmbstr TY_(getMessagePosDefault)( TidyMessageImpl message );
 
-/* the position part, localized */
+/** the position part, localized */
 ctmbstr TY_(getMessagePos)( TidyMessageImpl message );
 
-/* the prefix part, default language */
+/** the prefix part, default language */
 ctmbstr TY_(getMessagePrefixDefault)( TidyMessageImpl message );
 
-/* the prefix part, localized */
+/** the prefix part, localized */
 ctmbstr TY_(getMessagePrefix)( TidyMessageImpl message );
 
-/* the complete message, as would be output in the CLI */
+/** the complete message, as would be output in the CLI */
 ctmbstr TY_(getMessageOutputDefault)( TidyMessageImpl message );
 
 /* the complete message, as would be output in the CLI, localized */
