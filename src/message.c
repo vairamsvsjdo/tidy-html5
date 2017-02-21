@@ -7,6 +7,7 @@
 */
 
 #include "message.h"
+#include "messageobj.h"
 #include "tidy-int.h"
 #include "lexer.h"
 #include "streamio.h"
@@ -31,174 +32,6 @@ ctmbstr TY_(ReleaseDate)(void)
 ctmbstr TY_(tidyLibraryVersion)(void)
 {
   return TY_(library_version);
-}
-
-
-/*********************************************************************
- * Tidy Message Object Support
- *********************************************************************/
-
-/** Create an internal representation of a Tidy message with all of
-**  the information that that we know about the message.
-**  
-**  The function signature doesn't have to stay static and is a good
-**  place to add instantiation if expanding the API.
-**
-**  We currently know the doc, node, code, line, column, level, and
-**  args, will pre-calculate all of the other members upon creation.
-**  This ensures that we can use members directly, immediately,
-**  without having to use accessors internally.
-*/
-static TidyMessageImpl *tidyMessageCreate( TidyDocImpl *doc, Node *node,
-                                           uint code, int line, int column,
-                                           TidyReportLevel level, va_list args )
-{
-    TidyMessageImpl *result = TidyDocAlloc(doc, sizeof(TidyMessageImpl));
-    va_list args_copy;
-    enum { sizeMessageBuf=2048 };
-    ctmbstr pattern;
-
-    /* Things we know... */
-    
-    result->tidyDoc = doc;
-    result->tidyNode = node;
-    result->code = code;
-    result->line = line;
-    result->column = column;
-    result->level = level;
-    
-    /* (here we will do something with args) */
-
-    /* Things we create... */
-
-    result->messageKey = TY_(tidyErrorCodeAsKey)(code);
-    
-    result->messageFormatDefault = tidyDefaultString(code);
-    result->messageFormat = tidyLocalizedString(code);
-
-    result->messageDefault = TidyDocAlloc(doc, sizeMessageBuf);
-    va_copy(args_copy, args);
-    TY_(tmbvsnprintf)(result->messageDefault, sizeMessageBuf, result->messageFormatDefault, args_copy);
-    va_end(args_copy);
-
-    result->message = TidyDocAlloc(doc, sizeMessageBuf);
-    va_copy(args_copy, args);
-    TY_(tmbvsnprintf)(result->message, sizeMessageBuf, result->messageFormat, args_copy);
-    va_end(args_copy);
-
-    result->messagePosDefault = TidyDocAlloc(doc, sizeMessageBuf);
-    result->messagePos = TidyDocAlloc(doc, sizeMessageBuf);
-    
-    if ( cfgBool(doc, TidyEmacs) && cfgStr(doc, TidyEmacsFile) )
-    {
-        /* Change formatting to be parsable by GNU Emacs */
-        TY_(tmbsnprintf)(result->messagePosDefault, sizeMessageBuf, "%s:%d:%d: ", cfgStr(doc, TidyEmacsFile), line, column);
-        TY_(tmbsnprintf)(result->messagePos, sizeMessageBuf, "%s:%d:%d: ", cfgStr(doc, TidyEmacsFile), line, column);
-    }
-    else
-    {
-        /* traditional format */
-        TY_(tmbsnprintf)(result->messagePosDefault, sizeMessageBuf, tidyDefaultString(LINE_COLUMN_STRING), line, column);
-        TY_(tmbsnprintf)(result->messagePos, sizeMessageBuf, tidyLocalizedString(LINE_COLUMN_STRING), line, column);
-    }
-    
-    result->messagePrefixDefault = tidyDefaultString(level);
-
-    result->messagePrefix = tidyLocalizedString(level);
-    
-    if ( line > 0 && column > 0 )
-        pattern = "%s%s%s";
-    else
-        pattern = "%.0s%s%s";
-        
-    result->messageOutputDefault = TidyDocAlloc(doc, sizeMessageBuf);
-    TY_(tmbsnprintf)(result->messageOutputDefault, sizeMessageBuf, pattern,
-                     result->messagePosDefault, result->messagePrefixDefault,
-                     result->messageDefault);
-
-    result->messageOutput = TidyDocAlloc(doc, sizeMessageBuf);
-    TY_(tmbsnprintf)(result->messageOutput, sizeMessageBuf, pattern,
-                     result->messagePos, result->messagePrefix,
-                     result->message);
-
-
-    return result;
-}
-
-/** Because instances of TidyMessage retain memory, they must be released
-**  when we're done with them.
-*/
-static void tidyMessageRelease( TidyMessageImpl message )
-{
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageDefault );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.message );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messagePosDefault );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messagePos );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageOutputDefault );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageOutput );
-}
-
-
-/*********************************************************************
- * Modern Message Callback Functions
- * In addition to being exposed to the API, they are used internally
- * to produce the required strings as needed.
- *********************************************************************/
-
-ctmbstr TY_(getMessageKey)( TidyMessageImpl message )
-{
-    return message.messageKey;
-}
-
-ctmbstr TY_(getMessageFormatDefault)( TidyMessageImpl message )
-{
-    return message.messageFormatDefault;
-}
-
-ctmbstr TY_(getMessageFormat)( TidyMessageImpl message )
-{
-    return message.messageFormat;
-}
-
-ctmbstr TY_(getMessageDefault)( TidyMessageImpl message )
-{
-    return message.messageDefault;
-}
-
-ctmbstr TY_(getMessage)( TidyMessageImpl message )
-{
-    return message.message;
-}
-
-ctmbstr TY_(getMessagePosDefault)( TidyMessageImpl message )
-{
-    return message.messagePosDefault;
-}
-
-ctmbstr TY_(getMessagePos)( TidyMessageImpl message )
-{
-    return message.messagePos;
-}
-
-ctmbstr TY_(getMessagePrefixDefault)( TidyMessageImpl message )
-{
-    return message.messagePrefixDefault;
-}
-
-ctmbstr TY_(getMessagePrefix)( TidyMessageImpl message )
-{
-    return message.messagePrefix;
-}
-
-
-ctmbstr TY_(getMessageOutputDefault)( TidyMessageImpl message )
-{
-    return message.messageOutputDefault;
-}
-
-ctmbstr TY_(getMessageOutput)( TidyMessageImpl message )
-{
-    return message.messageOutput;
 }
 
 
@@ -307,36 +140,29 @@ static void NtoS(int n, tmbstr str)
 
 /* (forward) Performs final, formatted output to the output buffer,
 ** and executes the callbacks if used, in addition to keeping track
-** of error and warning counts.
+** of error and warning counts. Note that any message passed in
+** will be deallocated automatically.
 */
-static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
-                        int line, int col, ctmbstr msg, va_list args )
-#ifdef __GNUC__
-__attribute__((format(printf, 6, 0)))
-#endif
-;
-static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
-                        int line, int col, ctmbstr msg, va_list args )
+//static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
+//                        int line, int col, ctmbstr msg, va_list args )
+//#ifdef __GNUC__
+//__attribute__((format(printf, 6, 0)))
+//#endif
+//;
+static void messagePos( TidyMessageImpl *message, va_list args )
 {
-    TidyMessageImpl *message;
+    TidyDocImpl *doc = message->tidyDoc;
+    TidyDoc tdoc = tidyImplToDoc( doc );
     va_list args_copy;
     Bool go = yes;
 
-    /* Create a message object with our inputs. TODO: eliminate this
-       whole function later, and use this object directly. */
-    va_copy(args_copy, args);
-    message = tidyMessageCreate(doc, NULL, code, line, col, level, args_copy);
-    va_end(args_copy);
-    
-    
     /* mssgFilt is a simple error filter that provides minimal information
        to callback functions, and includes the message buffer in LibTidy's
        configured localization.
      */
     if ( doc->mssgFilt )
     {
-        TidyDoc tdoc = tidyImplToDoc( doc );
-        go = go & doc->mssgFilt( tdoc, level, line, col, message->messageOutput );
+        go = go & doc->mssgFilt( tdoc, message->level, message->line, message->column, message->messageOutput );
     }
 
     /* mssgCallback is intended to allow LibTidy users to localize messages
@@ -345,7 +171,7 @@ static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
     {
         TidyDoc tdoc = tidyImplToDoc( doc );
         va_copy(args_copy, args);
-        go = go & doc->mssgCallback( tdoc, level, line, col, tidyErrorCodeAsKey(code), args_copy );
+        go = go & doc->mssgCallback( tdoc, message->level, message->line, message->column, message->messageKey, args_copy );
         va_end(args_copy);
     }
 
@@ -358,10 +184,10 @@ static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
 
 
     /* Allow UpdateCount a further chance to block emission of message. */
-    go = go & UpdateCount( doc, level );
+    go = go & UpdateCount( doc, message->level );
     
     /* And if we're suppressing TidyInfo, then block emission. */
-    go = go & !(level == TidyInfo && !cfgBool(doc, TidyShowInfo));
+    go = go & !(message->level == TidyInfo && !cfgBool(doc, TidyShowInfo));
 
 
     /* Finally, output the message if applicable. */
@@ -416,13 +242,15 @@ __attribute__((format(printf, 2, 3)))
 #endif
 ;
 
+/* THESE ARE ALL TEMP until I work around the va_args */
 
 void message( TidyDocImpl* doc, TidyReportLevel level, uint code,
               ctmbstr msg, ... )
 {
     va_list args;
     va_start( args, msg );
-    messagePos( doc, level, code, 0, 0, msg, args );
+    TidyMessageImpl *message = tidyMessageCreate(doc, code, level, args);
+    messagePos( message, args ); /* releases message for us */
     va_end( args );
 }
 
@@ -430,12 +258,10 @@ void message( TidyDocImpl* doc, TidyReportLevel level, uint code,
 void messageLexer( TidyDocImpl* doc, TidyReportLevel level, uint code,
                    ctmbstr msg, ... )
 {
-    int line = ( doc->lexer ? doc->lexer->lines : 0 );
-    int col  = ( doc->lexer ? doc->lexer->columns : 0 );
-
     va_list args;
     va_start( args, msg );
-    messagePos( doc, level, code, line, col, msg, args );
+    TidyMessageImpl *message = tidyMessageCreateWithLexer(doc, code, level, args);
+    messagePos( message, args ); /* releases message for us */
     va_end( args );
 }
 
@@ -443,14 +269,10 @@ void messageLexer( TidyDocImpl* doc, TidyReportLevel level, uint code,
 void messageNode( TidyDocImpl* doc, TidyReportLevel level, uint code,
                   Node* node, ctmbstr msg, ... )
 {
-    int line = ( node ? node->line :
-                 ( doc->lexer ? doc->lexer->lines : 0 ) );
-    int col  = ( node ? node->column :
-                 ( doc->lexer ? doc->lexer->columns : 0 ) );
-
     va_list args;
     va_start( args, msg );
-    messagePos( doc, level, code, line, col, msg, args );
+    TidyMessageImpl *message = tidyMessageCreateWithNode(doc, node, code, level, args);
+    messagePos( message, args ); /* releases message for us */
     va_end( args );
 }
 
