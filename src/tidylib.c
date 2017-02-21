@@ -26,6 +26,7 @@
 #include "gdoc.h"
 #include "config.h"
 #include "message.h"
+#include "messageobj.h"
 #include "pprint.h"
 #include "entities.h"
 #include "tmbstr.h"

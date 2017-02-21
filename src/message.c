@@ -203,7 +203,7 @@ static void messagePos( TidyMessageImpl *message, va_list args )
         }
         TY_(WriteChar)( '\n', doc->errout );
     }
-    tidyMessageRelease(*message);
+    TY_(tidyMessageRelease)(*message);
 }
 
 
@@ -249,7 +249,7 @@ void message( TidyDocImpl* doc, TidyReportLevel level, uint code,
 {
     va_list args;
     va_start( args, msg );
-    TidyMessageImpl *message = tidyMessageCreate(doc, code, level, args);
+    TidyMessageImpl *message = TY_(tidyMessageCreate)(doc, code, level, args);
     messagePos( message, args ); /* releases message for us */
     va_end( args );
 }
@@ -260,7 +260,7 @@ void messageLexer( TidyDocImpl* doc, TidyReportLevel level, uint code,
 {
     va_list args;
     va_start( args, msg );
-    TidyMessageImpl *message = tidyMessageCreateWithLexer(doc, code, level, args);
+    TidyMessageImpl *message = TY_(tidyMessageCreateWithLexer)(doc, code, level, args);
     messagePos( message, args ); /* releases message for us */
     va_end( args );
 }
@@ -271,7 +271,7 @@ void messageNode( TidyDocImpl* doc, TidyReportLevel level, uint code,
 {
     va_list args;
     va_start( args, msg );
-    TidyMessageImpl *message = tidyMessageCreateWithNode(doc, node, code, level, args);
+    TidyMessageImpl *message = TY_(tidyMessageCreateWithNode)(doc, node, code, level, args);
     messagePos( message, args ); /* releases message for us */
     va_end( args );
 }

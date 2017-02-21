@@ -5,10 +5,8 @@
  * General Message Writing Routines
  *
  * This module handles LibTidy's high level output routines, as well
- * as provides some data structures for the console application.
- *
- * It also provides lookup functions and management for keys used
- * for retrieval of these messages.
+ * as provides lookup functions and management for keys used for
+ * retrieval of these messages.
  *
  * LibTidy emits two general types of output:
  *
@@ -39,19 +37,29 @@
 
 #include "forward.h"
 
-/* Release Information */
+/** @name Release Information */
+/** @{ */
+
 
 ctmbstr TY_(ReleaseDate)(void);
 ctmbstr TY_(tidyLibraryVersion)(void);
 
-/* High Level Message Writing Functions - General */
+
+/** @} */
+/** @name High Level Message Writing Functions - General */
+/** @{ */
+
 
 void TY_(ReportNotice)(TidyDocImpl* doc, Node *element, Node *node, uint code);
 void TY_(ReportWarning)(TidyDocImpl* doc, Node *element, Node *node, uint code);
 void TY_(ReportError)(TidyDocImpl* doc, Node* element, Node* node, uint code);
 void TY_(ReportFatal)(TidyDocImpl* doc, Node* element, Node* node, uint code);
 
-/* High Level Message Writing Functions - Specific */
+
+/** @} */
+/** @name High Level Message Writing Functions - Specific */
+/** @{ */
+
 
 void TY_(FileError)( TidyDocImpl* doc, ctmbstr file, TidyReportLevel level );
 void TY_(ReportAttrError)( TidyDocImpl* doc, Node* node, AttVal* av, uint code );
@@ -73,7 +81,10 @@ void TY_(ReportAccessWarning)( TidyDocImpl* doc, Node* node, uint code );
 #endif
 
 
-/* Output Dialogue Information */
+/** @} */
+/** @name Output Dialogue Information */
+/** @{ */
+
 
 void TY_(ErrorSummary)( TidyDocImpl* doc );
 void TY_(GeneralInfo)( TidyDocImpl* doc );
@@ -81,56 +92,17 @@ void TY_(NeedsAuthorIntervention)( TidyDocImpl* doc );
 void TY_(ReportNumWarnings)( TidyDocImpl* doc );
 
 
-/** @name Report and Dialogue API */
-/** @{ */
-
-/** get the message key string. */
-ctmbstr TY_(getMessageKey)( TidyMessageImpl message );
-
-/** the built-in format string */
-ctmbstr TY_(getMessageFormatDefault)( TidyMessageImpl message );
-
-/** the localized format string */
-ctmbstr TY_(getMessageFormat)( TidyMessageImpl message );
-
-/** the message, formatted, default language */
-ctmbstr TY_(getMessageDefault)( TidyMessageImpl message );
-
-/** the message, formatted, localized */
-ctmbstr TY_(getMessage)( TidyMessageImpl message );
-
-/** the position part, default language */
-ctmbstr TY_(getMessagePosDefault)( TidyMessageImpl message );
-
-/** the position part, localized */
-ctmbstr TY_(getMessagePos)( TidyMessageImpl message );
-
-/** the prefix part, default language */
-ctmbstr TY_(getMessagePrefixDefault)( TidyMessageImpl message );
-
-/** the prefix part, localized */
-ctmbstr TY_(getMessagePrefix)( TidyMessageImpl message );
-
-/** the complete message, as would be output in the CLI */
-ctmbstr TY_(getMessageOutputDefault)( TidyMessageImpl message );
-
-/* the complete message, as would be output in the CLI, localized */
-ctmbstr TY_(getMessageOutput)( TidyMessageImpl message );
-
 /** @} */
-
-
 /** @name Key Discovery */
 /** @{ */
 
 /**
- *  LibTidy users may want to use `TidyReportFilter3` to enable their own
- *  localization lookup features. Because Tidy's errors codes are enums the
+ *  LibTidy users may want to use `TidyReportCallback` to enable their own
+ *  localization lookup features. Because Tidy's report codes are enums the
  *  specific values can change over time. This function returns a string
  *  representing the enum value name that can be used as a lookup key
- *  independent of changing string values (TidyReportFiler2 is vulnerable
- *  to changing strings). `TidyReportFilter3` will return this general
- *  string as the error message indicator.
+ *  independent of changing string values. `TidyReportCallback` will return
+ *  this general string as the report message key.
  */
 ctmbstr TY_(tidyErrorCodeAsKey)(uint code);
 

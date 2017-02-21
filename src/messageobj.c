@@ -1,10 +1,10 @@
-//
-//  messageobj.c
-//  tidy
-//
-//  Created by Jim Derry on 2/20/17.
-//  Copyright © 2017 balthisar.com. All rights reserved.
-//
+/* messageobj.c -- Provides an external API for message reporting; 
+                   Abstract internals
+
+  (c) 2017 HTACG
+  See tidy.h for the copyright notice.
+
+*/
 
 #include "messageobj.h"
 #include "message.h"
@@ -17,6 +17,7 @@
 /*********************************************************************
  * Tidy Message Object Support
  *********************************************************************/
+
 
 /** Create an internal representation of a Tidy message with all of
  **  the information that that we know about the message.
@@ -113,9 +114,10 @@ static TidyMessageImpl *tidyMessageCreateInit( TidyDocImpl *doc,
 }
 
 
-/** Creates a TidyMessageImpl, but without line numbers.
+/** Creates a TidyMessageImpl, but without line numbers, such as used for
+ ** information report output.
  */
-TidyMessageImpl *tidyMessageCreate( TidyDocImpl *doc,
+TidyMessageImpl *TY_(tidyMessageCreate)( TidyDocImpl *doc,
                                           uint code,
                                           TidyReportLevel level,
                                           va_list args )
@@ -132,9 +134,9 @@ TidyMessageImpl *tidyMessageCreate( TidyDocImpl *doc,
 
 
 /** Creates a TidyMessageImpl, using the line and column from the provided
- **  Node as the message position source.
+ ** Node as the message position source.
  */
-TidyMessageImpl *tidyMessageCreateWithNode( TidyDocImpl *doc,
+TidyMessageImpl *TY_(tidyMessageCreateWithNode)( TidyDocImpl *doc,
                                                   Node *node,
                                                   uint code,
                                                   TidyReportLevel level,
@@ -156,9 +158,9 @@ TidyMessageImpl *tidyMessageCreateWithNode( TidyDocImpl *doc,
 
 
 /** Creates a TidyMessageImpl, using the line and column from the provided
- **  document's Lexcer as the message position source.
+ ** document's Lexer as the message position source.
  */
-TidyMessageImpl *tidyMessageCreateWithLexer( TidyDocImpl *doc,
+TidyMessageImpl *TY_(tidyMessageCreateWithLexer)( TidyDocImpl *doc,
                                                    uint code,
                                                    TidyReportLevel level,
                                                    va_list args )
@@ -179,7 +181,7 @@ TidyMessageImpl *tidyMessageCreateWithLexer( TidyDocImpl *doc,
 /** Because instances of TidyMessage retain memory, they must be released
  **  when we're done with them.
  */
-void tidyMessageRelease( TidyMessageImpl message )
+void TY_(tidyMessageRelease)( TidyMessageImpl message )
 {
     TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageDefault );
     TidyDocFree( tidyDocToImpl(message.tidyDoc), message.message );

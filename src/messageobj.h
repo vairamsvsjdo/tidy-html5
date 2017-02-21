@@ -1,36 +1,88 @@
-//
-//  messageobj.h
-//  tidy
-//
-//  Created by Jim Derry on 2/20/17.
-//  Copyright © 2017 balthisar.com. All rights reserved.
-//
-
 #ifndef messageobj_h
 #define messageobj_h
 
+/*********************************************************************
+ * Provides an external API for message reporting; 
+ * Abstract internals
+ *
+ * This module implements the `TidyMessageImpl` structure (declared
+ * in `tidy-int.h`) in order to abstract the reporting of reports
+ * and dialogue from the rest of Tidy, and to enable a robust and
+ * expandable API for message interrogation by LibTidy users.
+ *
+ *
+ * (c) 2017 HTACG
+ * See tidy.h for the copyright notice.
+ *********************************************************************/
 
 #include "forward.h"
 
 
-TidyMessageImpl *tidyMessageCreate( TidyDocImpl *doc,
+/** @name Message Creation and Releasing */
+/** @{ */
+
+TidyMessageImpl *TY_(tidyMessageCreate)( TidyDocImpl *doc,
                                           uint code,
                                           TidyReportLevel level,
                                           va_list args );
 
 
-TidyMessageImpl *tidyMessageCreateWithNode( TidyDocImpl *doc,
+TidyMessageImpl *TY_(tidyMessageCreateWithNode)( TidyDocImpl *doc,
                                                   Node *node,
                                                   uint code,
                                                   TidyReportLevel level,
                                            va_list args );
 
-TidyMessageImpl *tidyMessageCreateWithLexer( TidyDocImpl *doc,
+TidyMessageImpl *TY_(tidyMessageCreateWithLexer)( TidyDocImpl *doc,
                                                    uint code,
                                                    TidyReportLevel level,
                                             va_list args );
 
 
-void tidyMessageRelease( TidyMessageImpl message );
+void TY_(tidyMessageRelease)( TidyMessageImpl message );
+
+/** @} */
+
+
+/** @name Report and Dialogue API */
+/** @{ */
+
+/** get the message key string. */
+ctmbstr TY_(getMessageKey)( TidyMessageImpl message );
+
+/** the built-in format string */
+ctmbstr TY_(getMessageFormatDefault)( TidyMessageImpl message );
+
+/** the localized format string */
+ctmbstr TY_(getMessageFormat)( TidyMessageImpl message );
+
+/** the message, formatted, default language */
+ctmbstr TY_(getMessageDefault)( TidyMessageImpl message );
+
+/** the message, formatted, localized */
+ctmbstr TY_(getMessage)( TidyMessageImpl message );
+
+/** the position part, default language */
+ctmbstr TY_(getMessagePosDefault)( TidyMessageImpl message );
+
+/** the position part, localized */
+ctmbstr TY_(getMessagePos)( TidyMessageImpl message );
+
+/** the prefix part, default language */
+ctmbstr TY_(getMessagePrefixDefault)( TidyMessageImpl message );
+
+/** the prefix part, localized */
+ctmbstr TY_(getMessagePrefix)( TidyMessageImpl message );
+
+/** the complete message, as would be output in the CLI */
+ctmbstr TY_(getMessageOutputDefault)( TidyMessageImpl message );
+
+/* the complete message, as would be output in the CLI, localized */
+ctmbstr TY_(getMessageOutput)( TidyMessageImpl message );
+
+/** @} */
+
+
+
 
 #endif /* messageobj_h */
