@@ -263,6 +263,29 @@ typedef enum
   TidyFatal             /**< Crash! */
 } TidyReportLevel;
 
+    
+/** Indicates the data type of a format string parameter used when Tidy
+**  emits reports and dialogue as part of the messaging callback functions.
+**  See `messageobj.h` for more information on this API.
+*/
+typedef enum
+{
+    tidyFormatType_INT16    = 0,
+    tidyFormatType_UINT16   = 1,
+    tidyFormatType_INTN     = 2,
+    tidyFormatType_UINTN    = 3,
+    tidyFormatType_INT32    = 4,
+    tidyFormatType_UINT32   = 5,
+    tidyFormatType_INT64    = 6,
+    tidyFormatType_UINT64   = 7,
+    tidyFormatType_STRING   = 8,
+    tidyFormatType_DOUBLE   = 9,
+    tidyFormatType_INTSTR   = 10,
+#ifdef WIN32
+    tidyFormatType_WSTRING  = 11,
+#endif
+    tidyFormatType_UNKNOWN  = 20
+} TidyFormatParameterType;
 
 /* Document tree traversal functions
 */

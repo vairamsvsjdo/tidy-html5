@@ -15,6 +15,29 @@
 
 
 /*********************************************************************
+ * BuildArgArray Support - forward declarations
+ *********************************************************************/
+
+
+/** A record of a single argument and its type. An array these
+**  represents the arguments supplied to a format string, ordered
+**  in the same position as they occur in the format string. Because
+**  Windows doesn't support modern positional arguments, Tidy doesn't
+**  either.
+*/
+struct printfArg;
+
+
+/** Returns a pointer to an allocated array of `printfArg` given a format
+ ** string and a va_list, or NULL if not successful or no parameters were
+ ** given. Parameter `rv` will return with the count of zero or more
+ ** parameters if successful, else -1.
+ **
+ */
+static struct printfArg *BuildArgArray( TidyDocImpl *doc, ctmbstr fmt, va_list ap, int *rv );
+
+
+/*********************************************************************
  * Tidy Message Object Support
  *********************************************************************/
 
@@ -34,12 +57,12 @@
  **  requires every known parameter.
  */
 static TidyMessageImpl *tidyMessageCreateInit( TidyDocImpl *doc,
-                                              Node *node,
-                                              uint code,
-                                              int line,
-                                              int column,
-                                              TidyReportLevel level,
-                                              va_list args )
+                                               Node *node,
+                                               uint code,
+                                               int line,
+                                               int column,
+                                               TidyReportLevel level,
+                                               va_list args )
 {
     TidyMessageImpl *result = TidyDocAlloc(doc, sizeof(TidyMessageImpl));
     va_list args_copy;
@@ -55,9 +78,11 @@ static TidyMessageImpl *tidyMessageCreateInit( TidyDocImpl *doc,
     result->column = column;
     result->level = level;
 
-    /* (here we will do something with args) */
-
     /* Things we create... */
+
+    va_copy(args_copy, args);
+    result->arguments = BuildArgArray(doc, tidyDefaultString(code), args_copy, &result->argcount);
+    va_end(args_copy);
 
     result->messageKey = TY_(tidyErrorCodeAsKey)(code);
 
@@ -183,6 +208,7 @@ TidyMessageImpl *TY_(tidyMessageCreateWithLexer)( TidyDocImpl *doc,
  */
 void TY_(tidyMessageRelease)( TidyMessageImpl message )
 {
+    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.arguments );
     TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageDefault );
     TidyDocFree( tidyDocToImpl(message.tidyDoc), message.message );
     TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messagePosDefault );
@@ -198,9 +224,25 @@ void TY_(tidyMessageRelease)( TidyMessageImpl message )
  * to produce the required strings as needed.
  *********************************************************************/
 
+
 ctmbstr TY_(getMessageKey)( TidyMessageImpl message )
 {
     return message.messageKey;
+}
+
+int TY_(getMessageLine)( TidyMessageImpl message )
+{
+    return message.line;
+}
+
+int TY_(getMessageColumn)( TidyMessageImpl message )
+{
+    return message.column;
+}
+
+TidyReportLevel TY_(getMessageLevel)( TidyMessageImpl message )
+{
+    return message.level;
 }
 
 ctmbstr TY_(getMessageFormatDefault)( TidyMessageImpl message )
@@ -252,5 +294,296 @@ ctmbstr TY_(getMessageOutputDefault)( TidyMessageImpl message )
 ctmbstr TY_(getMessageOutput)( TidyMessageImpl message )
 {
     return message.messageOutput;
+}
+
+
+/*********************************************************************
+ * BuildArgArray support
+ * Adapted loosely from Mozilla `prprf.c`, Mozilla Public License:
+ *   - https://www.mozilla.org/en-US/MPL/2.0/
+ *********************************************************************/
+
+
+struct printfArg {
+    TidyFormatParameterType type;  /* type of the argument    */
+    union {                        /* the argument            */
+        int i;
+        unsigned int ui;
+        int32_t i32;
+        uint32_t ui32;
+        int64_t ll;
+        uint64_t ull;
+        double d;
+        const char *s;
+        size_t *ip;
+#ifdef WIN32
+        const WCHAR *ws;
+#endif
+    } u;
+};
+
+static struct printfArg* BuildArgArray( TidyDocImpl *doc, const char *fmt, va_list ap, int* rv )
+{
+    int number = 0;
+    int cn = -1;
+    int i = 0;
+    const char* p;
+    char  c;
+    struct printfArg* nas;
+    
+    /* first pass: determine number of valid % to allocate space. */
+    
+    p = fmt;
+    *rv = 0;
+    
+    while( ( c = *p++ ) != 0 )
+    {
+        if( c != '%' )
+            continue;
+        
+        if( ( c = *p++ ) == '%' )	/* skip %% case */
+            continue;
+        else
+            number++;
+    }
+        
+
+    if( number == 0 )
+        return NULL;
+
+    
+    nas = (struct printfArg*)TidyDocAlloc( doc, number * sizeof( struct printfArg ) );
+    if( !nas )
+    {
+        *rv = -1;
+        return NULL;
+    }
+
+
+    for( i = 0; i < number; i++ )
+    {
+        nas[i].type = tidyFormatType_UNKNOWN;
+    }
+    
+    
+    /* second pass: set nas[].type. */
+    
+    p = fmt;
+    while( ( c = *p++ ) != 0 )
+    {
+        if( c != '%' )
+            continue;
+        
+        if( ( c = *p++ ) == '%' )
+            continue; /* skip %% case */
+        
+        
+        /* width -- width via parameter */
+        if (c == '*')
+        {
+            /* not supported feature */
+            *rv = -1;
+            break;
+        }
+        
+        /* width field -- skip */
+        while ((c >= '0') && (c <= '9'))
+        {
+            c = *p++;
+        }
+        
+        /* precision */
+        if (c == '.')
+        {
+            c = *p++;
+            if (c == '*') {
+                /* not supported feature */
+                *rv = -1;
+                break;
+            }
+            
+            while ((c >= '0') && (c <= '9'))
+            {
+                c = *p++;
+            }
+        }
+        
+        
+        cn++;
+        
+        /* size */
+        nas[cn].type = tidyFormatType_INTN;
+        if (c == 'h')
+        {
+            nas[cn].type = tidyFormatType_INT16;
+            c = *p++;
+        } else if (c == 'L')
+        {
+            nas[cn].type = tidyFormatType_INT64;
+            c = *p++;
+        } else if (c == 'l')
+        {
+            nas[cn].type = tidyFormatType_INT32;
+            c = *p++;
+            if (c == 'l') {
+                nas[cn].type = tidyFormatType_INT64;
+                c = *p++;
+            }
+        } else if (c == 'z')
+        {
+            if (sizeof(size_t) == sizeof(int32_t))
+            {
+                nas[ cn ].type = tidyFormatType_INT32;
+            } else if (sizeof(size_t) == sizeof(int64_t))
+            {
+                nas[ cn ].type = tidyFormatType_INT64;
+            } else
+            {
+                nas[ cn ].type = tidyFormatType_UNKNOWN;
+            }
+            c = *p++;
+        }
+        
+        /* format */
+        switch (c)
+        {
+            case 'd':
+            case 'c':
+            case 'i':
+            case 'o':
+            case 'u':
+            case 'x':
+            case 'X':
+                break;
+                
+            case 'e':
+            case 'f':
+            case 'g':
+                nas[ cn ].type = tidyFormatType_DOUBLE;
+                break;
+                
+            case 'p':
+                if (sizeof(void *) == sizeof(int32_t))
+                {
+                    nas[ cn ].type = tidyFormatType_UINT32;
+                } else if (sizeof(void *) == sizeof(int64_t))
+                {
+                    nas[ cn ].type = tidyFormatType_UINT64;
+                } else if (sizeof(void *) == sizeof(int))
+                {
+                    nas[ cn ].type = tidyFormatType_UINTN;
+                } else
+                {
+                    nas[ cn ].type = tidyFormatType_UNKNOWN;
+                }
+                break;
+                
+            case 'S':
+#ifdef WIN32
+                nas[ cn ].type = TYPE_WSTRING;
+                break;
+#endif
+            case 'C':
+            case 'E':
+            case 'G':
+                nas[ cn ].type = tidyFormatType_UNKNOWN;
+                break;
+                
+            case 's':
+                nas[ cn ].type = tidyFormatType_STRING;
+                break;
+                
+            case 'n':
+                nas[ cn ].type = tidyFormatType_INTSTR;
+                break;
+                
+            default:
+                nas[ cn ].type = tidyFormatType_UNKNOWN;
+                break;
+        }
+        
+        /* Something's not right. */
+        if( nas[ cn ].type == tidyFormatType_UNKNOWN )
+        {
+            *rv = -1;
+            break;
+        }
+    }
+    
+    
+    /* third pass: fill the nas[cn].ap */
+    
+    if( *rv < 0 )
+    {
+        TidyDocFree( doc, nas );;
+        return NULL;
+    }
+    
+    cn = 0;
+    while( cn < number )
+    {
+        if( nas[cn].type == tidyFormatType_UNKNOWN )
+        {
+            cn++;
+            continue;
+        }
+        
+        switch( nas[cn].type )
+        {
+            case tidyFormatType_INT16:
+            case tidyFormatType_UINT16:
+            case tidyFormatType_INTN:
+                nas[cn].u.i = va_arg( ap, int );
+                break;
+                
+            case tidyFormatType_UINTN:
+                nas[cn].u.ui = va_arg( ap, unsigned int );
+                break;
+                
+            case tidyFormatType_INT32:
+                nas[cn].u.i32 = va_arg( ap, int32_t );
+                break;
+                
+            case tidyFormatType_UINT32:
+                nas[cn].u.ui32 = va_arg( ap, uint32_t );
+                break;
+                
+            case tidyFormatType_INT64:
+                nas[cn].u.ll = va_arg( ap, int64_t );
+                break;
+                
+            case tidyFormatType_UINT64:
+                nas[cn].u.ull = va_arg( ap, uint64_t );
+                break;
+                
+            case tidyFormatType_STRING:
+                nas[cn].u.s = va_arg( ap, char* );
+                break;
+                
+#ifdef WIN32
+            case tidyFormatType_WSTRING:
+                nas[cn].u.ws = va_arg( ap, WCHAR* );
+                break;
+#endif
+                
+            case tidyFormatType_INTSTR:
+                nas[cn].u.ip = va_arg( ap, size_t* );
+                break;
+                
+            case tidyFormatType_DOUBLE:
+                nas[cn].u.d = va_arg( ap, double );
+                break;
+                
+            default:
+                TidyDocFree( doc, nas );
+                *rv = -1;
+                return NULL;
+        }
+        
+        cn++;
+    }
+    
+    *rv = number;
+    return nas;
 }
 

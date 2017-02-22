@@ -109,7 +109,8 @@ struct _TidyMessageImpl
     int                 column;      /* the column the message applies to */
     TidyReportLevel     level;       /* the severity level of the message */
     
-    /* (some structure for args will exist here) */
+    int                 argcount;    /* the number of arguments */
+    struct printfArg*   arguments;   /* the arguments' values and types */
 
     ctmbstr             messageKey;             /* the message code as a key string */
 

@@ -636,6 +636,15 @@ TIDY_EXPORT int TIDY_CALL tidySetErrorSink( TidyDoc tdoc, TidyOutputSink* sink )
 /** get the message key string. */
 TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageKey( TidyMessage tmessage );
 
+/** get the line number the message applies to. */
+TIDY_EXPORT int TIDY_CALL tidyGetMessageLine( TidyMessage tmessage );
+
+/** get the column the message applies to. */
+TIDY_EXPORT int TIDY_CALL tidyGetMessageColumn( TidyMessage tmessage );
+
+/** get the TidyReportLevel of the message. */
+TIDY_EXPORT TidyReportLevel TIDY_CALL tidyGetMessageLevel( TidyMessage tmessage );
+    
 /** the built-in format string */
 TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageFormatDefault( TidyMessage tmessage );
 

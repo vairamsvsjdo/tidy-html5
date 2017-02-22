@@ -696,6 +696,26 @@ ctmbstr TIDY_CALL tidyGetMessageKey( TidyMessage tmessage )
     return TY_(getMessageKey)(*message);
 }
 
+int TIDY_CALL tidyGetMessageLine( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessageLine)(*message);
+}
+
+int TIDY_CALL tidyGetMessageColumn( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessageColumn)(*message);
+}
+
+TidyReportLevel TIDY_CALL tidyGetMessageLevel( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessageLevel)(*message);
+}
+
+
+
 ctmbstr TIDY_CALL tidyGetMessageFormatDefault( TidyMessage tmessage )
 {
     TidyMessageImpl *message = tidyMessageToImpl(tmessage);

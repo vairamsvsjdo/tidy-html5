@@ -41,14 +41,23 @@ TidyMessageImpl *TY_(tidyMessageCreateWithLexer)( TidyDocImpl *doc,
 
 void TY_(tidyMessageRelease)( TidyMessageImpl message );
 
+
 /** @} */
-
-
 /** @name Report and Dialogue API */
 /** @{ */
 
+
 /** get the message key string. */
 ctmbstr TY_(getMessageKey)( TidyMessageImpl message );
+
+/** get the line number the message applies to. */
+int TY_(getMessageLine)( TidyMessageImpl message );
+
+/** get the column the message applies to. */
+int TY_(getMessageColumn)( TidyMessageImpl message );
+
+/** get the TidyReportLevel of the message. */
+TidyReportLevel TY_(getMessageLevel)( TidyMessageImpl message );
 
 /** the built-in format string */
 ctmbstr TY_(getMessageFormatDefault)( TidyMessageImpl message );
@@ -80,9 +89,9 @@ ctmbstr TY_(getMessageOutputDefault)( TidyMessageImpl message );
 /* the complete message, as would be output in the CLI, localized */
 ctmbstr TY_(getMessageOutput)( TidyMessageImpl message );
 
+
 /** @} */
 
 
-
-
+/** @} */
 #endif /* messageobj_h */
