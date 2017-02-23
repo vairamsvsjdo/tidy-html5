@@ -21,25 +21,42 @@
 /** @name Message Creation and Releasing */
 /** @{ */
 
+
 TidyMessageImpl *TY_(tidyMessageCreate)( TidyDocImpl *doc,
+                                         uint code,
+                                         TidyReportLevel level,
+                                         ... );
+
+TidyMessageImpl *TY_(tidyMessageCreateV)( TidyDocImpl *doc,
                                           uint code,
                                           TidyReportLevel level,
                                           va_list args );
 
 
 TidyMessageImpl *TY_(tidyMessageCreateWithNode)( TidyDocImpl *doc,
+                                                 Node *node,
+                                                 uint code,
+                                                 TidyReportLevel level,
+                                                 ... );
+
+TidyMessageImpl *TY_(tidyMessageCreateWithNodeV)( TidyDocImpl *doc,
                                                   Node *node,
                                                   uint code,
                                                   TidyReportLevel level,
-                                           va_list args );
+                                                  va_list args );
 
 TidyMessageImpl *TY_(tidyMessageCreateWithLexer)( TidyDocImpl *doc,
+                                                  uint code,
+                                                  TidyReportLevel level,
+                                                  ... );
+
+TidyMessageImpl *TY_(tidyMessageCreateWithLexerV)( TidyDocImpl *doc,
                                                    uint code,
                                                    TidyReportLevel level,
-                                            va_list args );
+                                                   va_list args );
 
 
-void TY_(tidyMessageRelease)( TidyMessageImpl message );
+void TY_(tidyMessageRelease)( TidyMessageImpl *message );
 
 
 /** @} */

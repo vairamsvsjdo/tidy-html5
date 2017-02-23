@@ -1522,10 +1522,14 @@ static void unknownOption( uint c )
  */
 static Bool reportCallback(TidyMessage tmessage)
 {
+#if 0
     ctmbstr output = tidyGetMessageOutput( tmessage );
-    printf("%s\n", output);
+    printf("FILTER: %s\n", output);
 
     return no; /* suppress LibTidy's own output of this message */
+#else
+    return yes;
+#endif
 }
 
 

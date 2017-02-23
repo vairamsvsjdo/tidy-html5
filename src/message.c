@@ -169,7 +169,7 @@ static void messagePos( TidyMessageImpl *message )
         TY_(WriteChar)( '\n', doc->errout );
     }
 
-    TY_(tidyMessageRelease)(*message);
+    TY_(tidyMessageRelease)(message);
 }
 
 
@@ -215,7 +215,7 @@ void message( TidyDocImpl* doc, TidyReportLevel level, uint code,
 {
     va_list args;
     va_start( args, msg );
-    TidyMessageImpl *message = TY_(tidyMessageCreate)(doc, code, level, args);
+    TidyMessageImpl *message = TY_(tidyMessageCreateV)(doc, code, level, args);
     messagePos( message ); /* releases message for us */
     va_end( args );
 }
@@ -226,7 +226,7 @@ void messageLexer( TidyDocImpl* doc, TidyReportLevel level, uint code,
 {
     va_list args;
     va_start( args, msg );
-    TidyMessageImpl *message = TY_(tidyMessageCreateWithLexer)(doc, code, level, args);
+    TidyMessageImpl *message = TY_(tidyMessageCreateWithLexerV)(doc, code, level, args);
     messagePos( message ); /* releases message for us */
     va_end( args );
 }
@@ -237,7 +237,7 @@ void messageNode( TidyDocImpl* doc, TidyReportLevel level, uint code,
 {
     va_list args;
     va_start( args, msg );
-    TidyMessageImpl *message = TY_(tidyMessageCreateWithNode)(doc, node, code, level, args);
+    TidyMessageImpl *message = TY_(tidyMessageCreateWithNodeV)(doc, node, code, level, args);
     messagePos( message ); /* releases message for us */
     va_end( args );
 }
@@ -685,10 +685,13 @@ void TY_(ReportEntityError)( TidyDocImpl* doc, uint code, ctmbstr entity,
 
 void TY_(ReportMarkupVersion)( TidyDocImpl* doc )
 {
+    TidyMessageImpl *mssg;
+    
     if (doc->givenDoctype)
     {
         /* todo: deal with non-ASCII characters in FPI */
-        message(doc, TidyInfo, STRING_DOCTYPE_GIVEN, tidyLocalizedString(STRING_DOCTYPE_GIVEN), doc->givenDoctype);
+        mssg = TY_(tidyMessageCreate)( doc, STRING_DOCTYPE_GIVEN, TidyInfo, doc->givenDoctype );
+        messagePos(mssg);
     }
     
     if ( ! cfgBool(doc, TidyXmlTags) )
@@ -704,11 +707,15 @@ void TY_(ReportMarkupVersion)( TidyDocImpl* doc )
         if (!vers)
             vers = tidyLocalizedString(STRING_HTML_PROPRIETARY);
         
-        message( doc, TidyInfo, STRING_CONTENT_LOOKS, tidyLocalizedString(STRING_CONTENT_LOOKS), vers );
+        mssg = TY_(tidyMessageCreate)( doc, STRING_CONTENT_LOOKS, TidyInfo, vers );
+        messagePos(mssg);
         
         /* Warn about missing sytem identifier (SI) in emitted doctype */
         if ( TY_(WarnMissingSIInEmittedDocType)( doc ) )
-            message( doc, TidyInfo, STRING_NO_SYSID, "%s", tidyLocalizedString(STRING_NO_SYSID) );
+        {
+            mssg = TY_(tidyMessageCreate)( doc, STRING_NO_SYSID, TidyInfo, "%" );
+            messagePos(mssg);
+        }
     }
 }
 

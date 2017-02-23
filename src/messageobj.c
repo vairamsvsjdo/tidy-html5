@@ -59,7 +59,7 @@ static struct printfArg *BuildArgArray( TidyDocImpl *doc, ctmbstr fmt, va_list a
  **  This version serves as the designated initializer and as such
  **  requires every known parameter.
  */
-static TidyMessageImpl *tidyMessageCreateInit( TidyDocImpl *doc,
+static TidyMessageImpl *tidyMessageCreateInitV( TidyDocImpl *doc,
                                                Node *node,
                                                uint code,
                                                int line,
@@ -174,7 +174,8 @@ static TidyMessageImpl *tidyMessageCreateInit( TidyDocImpl *doc,
 /** Creates a TidyMessageImpl, but without line numbers, such as used for
  ** information report output.
  */
-TidyMessageImpl *TY_(tidyMessageCreate)( TidyDocImpl *doc,
+/* TEMPORARY TRANSITION FUNCTION */
+TidyMessageImpl *TY_(tidyMessageCreateV)( TidyDocImpl *doc,
                                           uint code,
                                           TidyReportLevel level,
                                           va_list args )
@@ -183,17 +184,31 @@ TidyMessageImpl *TY_(tidyMessageCreate)( TidyDocImpl *doc,
     va_list args_copy;
 
     va_copy(args_copy, args);
-    result = tidyMessageCreateInit(doc, NULL, code, 0, 0, level, args_copy);
+    result = tidyMessageCreateInitV(doc, NULL, code, 0, 0, level, args_copy);
     va_end(args_copy);
 
     return result;
 }
 
+TidyMessageImpl *TY_(tidyMessageCreate)( TidyDocImpl *doc,
+                                         uint code,
+                                         TidyReportLevel level,
+                                         ... )
+{
+    TidyMessageImpl *result;
+    va_list args;
+    va_start(args, level);
+    result = tidyMessageCreateInitV(doc, NULL, code, 0, 0, level, args);
+    va_end(args);
+    
+    return result;
+}
 
 /** Creates a TidyMessageImpl, using the line and column from the provided
  ** Node as the message position source.
  */
-TidyMessageImpl *TY_(tidyMessageCreateWithNode)( TidyDocImpl *doc,
+/* TEMPORARY TRANSITION FUNCTION */
+TidyMessageImpl *TY_(tidyMessageCreateWithNodeV)( TidyDocImpl *doc,
                                                   Node *node,
                                                   uint code,
                                                   TidyReportLevel level,
@@ -207,9 +222,29 @@ TidyMessageImpl *TY_(tidyMessageCreateWithNode)( TidyDocImpl *doc,
                 ( doc->lexer ? doc->lexer->columns : 0 ) );
 
     va_copy(args_copy, args);
-    result = tidyMessageCreateInit(doc, node, code, line, col, level, args_copy);
+    result = tidyMessageCreateInitV(doc, node, code, line, col, level, args_copy);
     va_end(args_copy);
 
+    return result;
+}
+
+TidyMessageImpl *TY_(tidyMessageCreateWithNode)( TidyDocImpl *doc,
+                                                 Node *node,
+                                                 uint code,
+                                                 TidyReportLevel level,
+                                                 ... )
+{
+    TidyMessageImpl *result;
+    va_list args_copy;
+    int line = ( node ? node->line :
+                ( doc->lexer ? doc->lexer->lines : 0 ) );
+    int col  = ( node ? node->column :
+                ( doc->lexer ? doc->lexer->columns : 0 ) );
+    
+    va_start(args_copy, level);
+    result = tidyMessageCreateInitV(doc, node, code, line, col, level, args_copy);
+    va_end(args_copy);
+    
     return result;
 }
 
@@ -217,7 +252,8 @@ TidyMessageImpl *TY_(tidyMessageCreateWithNode)( TidyDocImpl *doc,
 /** Creates a TidyMessageImpl, using the line and column from the provided
  ** document's Lexer as the message position source.
  */
-TidyMessageImpl *TY_(tidyMessageCreateWithLexer)( TidyDocImpl *doc,
+/* TEMPORARY TRANSITION FUNCTION */
+TidyMessageImpl *TY_(tidyMessageCreateWithLexerV)( TidyDocImpl *doc,
                                                    uint code,
                                                    TidyReportLevel level,
                                                    va_list args )
@@ -228,9 +264,26 @@ TidyMessageImpl *TY_(tidyMessageCreateWithLexer)( TidyDocImpl *doc,
     int col  = ( doc->lexer ? doc->lexer->columns : 0 );
 
     va_copy(args_copy, args);
-    result = tidyMessageCreateInit(doc, NULL, code, line, col, level, args_copy);
+    result = tidyMessageCreateInitV(doc, NULL, code, line, col, level, args_copy);
     va_end(args_copy);
 
+    return result;
+}
+
+TidyMessageImpl *TY_(tidyMessageCreateWithLexer)( TidyDocImpl *doc,
+                                                  uint code,
+                                                  TidyReportLevel level,
+                                                  ... )
+{
+    TidyMessageImpl *result;
+    va_list args_copy;
+    int line = ( doc->lexer ? doc->lexer->lines : 0 );
+    int col  = ( doc->lexer ? doc->lexer->columns : 0 );
+    
+    va_start(args_copy, level);
+    result = tidyMessageCreateInitV(doc, NULL, code, line, col, level, args_copy);
+    va_end(args_copy);
+    
     return result;
 }
 
@@ -238,15 +291,15 @@ TidyMessageImpl *TY_(tidyMessageCreateWithLexer)( TidyDocImpl *doc,
 /** Because instances of TidyMessage retain memory, they must be released
  **  when we're done with them.
  */
-void TY_(tidyMessageRelease)( TidyMessageImpl message )
+void TY_(tidyMessageRelease)( TidyMessageImpl *message )
 {
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.arguments );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageDefault );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.message );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messagePosDefault );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messagePos );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageOutputDefault );
-    TidyDocFree( tidyDocToImpl(message.tidyDoc), message.messageOutput );
+    TidyDocFree( tidyDocToImpl(message->tidyDoc), message->arguments );
+    TidyDocFree( tidyDocToImpl(message->tidyDoc), message->messageDefault );
+    TidyDocFree( tidyDocToImpl(message->tidyDoc), message->message );
+    TidyDocFree( tidyDocToImpl(message->tidyDoc), message->messagePosDefault );
+    TidyDocFree( tidyDocToImpl(message->tidyDoc), message->messagePos );
+    TidyDocFree( tidyDocToImpl(message->tidyDoc), message->messageOutputDefault );
+    TidyDocFree( tidyDocToImpl(message->tidyDoc), message->messageOutput );
 }
 
 
