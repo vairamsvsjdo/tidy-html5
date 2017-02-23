@@ -2175,8 +2175,8 @@ static languageDefinition language_en = { whichPluralForm_en, {
     },
 
     {/* This console output should be limited to 78 characters per line.
-        - %n represents the name of the executable from the file system, and is mostly like going to be "tidy".
-        - %2 represents a version number, typically x.x.xx.
+        - First %s represents the name of the executable from the file system, and is mostly like going to be "tidy".
+        - Second %s represents a version number, typically x.x.xx.
         - The strings "Tidy" and "HTML Tidy" are the program name and must not be translated. */
       TC_TXT_HELP_1,                0,
         "\n"
