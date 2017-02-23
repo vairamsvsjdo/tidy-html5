@@ -138,59 +138,24 @@ static void NtoS(int n, tmbstr str)
  * can do so.
  *********************************************************************/
 
-/* (forward) Performs final, formatted output to the output buffer,
-** and executes the callbacks if used, in addition to keeping track
-** of error and warning counts. Note that any message passed in
-** will be deallocated automatically.
+/* Performs final, formatted output to the output buffer if we've not
+** exceeded output limits and if the filters aren't blocking messages.
+** This is also where we keep track of error and warning counts. Note
+** that any message passed in will be deallocated automatically.
 */
-//static void messagePos( TidyDocImpl* doc, TidyReportLevel level, uint code,
-//                        int line, int col, ctmbstr msg, va_list args )
-//#ifdef __GNUC__
-//__attribute__((format(printf, 6, 0)))
-//#endif
-//;
-static void messagePos( TidyMessageImpl *message, va_list args )
+static void messagePos( TidyMessageImpl *message )
 {
     TidyDocImpl *doc = message->tidyDoc;
-    TidyDoc tdoc = tidyImplToDoc( doc );
-    va_list args_copy;
-    Bool go = yes;
+    Bool go = message->allowMessage;       /* callbacks have preset this */
 
-    /* mssgFilt is a simple error filter that provides minimal information
-       to callback functions, and includes the message buffer in LibTidy's
-       configured localization.
-     */
-    if ( doc->mssgFilt )
-    {
-        go = go & doc->mssgFilt( tdoc, message->level, message->line, message->column, message->messageOutput );
-    }
-
-    /* mssgCallback is intended to allow LibTidy users to localize messages
-       via their own means by providing a key and the parameters to fill it. */
-    if ( doc->mssgCallback )
-    {
-        TidyDoc tdoc = tidyImplToDoc( doc );
-        va_copy(args_copy, args);
-        go = go & doc->mssgCallback( tdoc, message->level, message->line, message->column, message->messageKey, args_copy );
-        va_end(args_copy);
-    }
-
-    /* mssgMessageCallback is the newest interface to interrogate Tidy's
-       emitted messages. */
-    if ( doc->mssgMessageCallback )
-    {
-        go = go & doc->mssgMessageCallback( tidyImplToMessage(message) );
-    }
-
-
-    /* Allow UpdateCount a further chance to block emission of message. */
+    /* Allow UpdateCount a chance to block emission of message. */
     go = go & UpdateCount( doc, message->level );
     
     /* And if we're suppressing TidyInfo, then block emission. */
     go = go & !(message->level == TidyInfo && !cfgBool(doc, TidyShowInfo));
 
 
-    /* Finally, output the message if applicable. */
+    /* Output the message if applicable. */
     if ( go )
     {
         TidyOutputSink *outp = &doc->errout->sink;
@@ -203,6 +168,7 @@ static void messagePos( TidyMessageImpl *message, va_list args )
         }
         TY_(WriteChar)( '\n', doc->errout );
     }
+
     TY_(tidyMessageRelease)(*message);
 }
 
@@ -250,7 +216,7 @@ void message( TidyDocImpl* doc, TidyReportLevel level, uint code,
     va_list args;
     va_start( args, msg );
     TidyMessageImpl *message = TY_(tidyMessageCreate)(doc, code, level, args);
-    messagePos( message, args ); /* releases message for us */
+    messagePos( message ); /* releases message for us */
     va_end( args );
 }
 
@@ -261,7 +227,7 @@ void messageLexer( TidyDocImpl* doc, TidyReportLevel level, uint code,
     va_list args;
     va_start( args, msg );
     TidyMessageImpl *message = TY_(tidyMessageCreateWithLexer)(doc, code, level, args);
-    messagePos( message, args ); /* releases message for us */
+    messagePos( message ); /* releases message for us */
     va_end( args );
 }
 
@@ -272,7 +238,7 @@ void messageNode( TidyDocImpl* doc, TidyReportLevel level, uint code,
     va_list args;
     va_start( args, msg );
     TidyMessageImpl *message = TY_(tidyMessageCreateWithNode)(doc, node, code, level, args);
-    messagePos( message, args ); /* releases message for us */
+    messagePos( message ); /* releases message for us */
     va_end( args );
 }
 

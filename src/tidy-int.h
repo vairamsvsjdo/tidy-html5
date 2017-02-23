@@ -102,12 +102,13 @@ struct _TidyDocImpl
 */
 struct _TidyMessageImpl
 {
-    TidyDocImpl         *tidyDoc;    /* document instance this message is attributed to */
-    Node                *tidyNode;   /* the node reporting the message, if applicable */
-    uint                code;        /* the message code */
-    int                 line;        /* the line message applies to */
-    int                 column;      /* the column the message applies to */
-    TidyReportLevel     level;       /* the severity level of the message */
+    TidyDocImpl         *tidyDoc;     /* document instance this message is attributed to */
+    Node                *tidyNode;    /* the node reporting the message, if applicable */
+    uint                code;         /* the message code */
+    int                 line;         /* the line message applies to */
+    int                 column;       /* the column the message applies to */
+    TidyReportLevel     level;        /* the severity level of the message */
+    Bool                allowMessage; /* indicates whether or not a filter rejected a message */
     
     int                 argcount;    /* the number of arguments */
     struct printfArg*   arguments;   /* the arguments' values and types */

@@ -53,6 +53,9 @@ static struct printfArg *BuildArgArray( TidyDocImpl *doc, ctmbstr fmt, va_list a
  **  This ensures that we can use members directly, immediately,
  **  without having to use accessors internally.
  **
+ **  If any message callback filters are setup by API clients, they 
+ **  will be called here.
+ **
  **  This version serves as the designated initializer and as such
  **  requires every known parameter.
  */
@@ -65,6 +68,7 @@ static TidyMessageImpl *tidyMessageCreateInit( TidyDocImpl *doc,
                                                va_list args )
 {
     TidyMessageImpl *result = TidyDocAlloc(doc, sizeof(TidyMessageImpl));
+    TidyDoc tdoc = tidyImplToDoc(doc);
     va_list args_copy;
     enum { sizeMessageBuf=2048 };
     ctmbstr pattern;
@@ -134,6 +138,34 @@ static TidyMessageImpl *tidyMessageCreateInit( TidyDocImpl *doc,
                      result->messagePos, result->messagePrefix,
                      result->message);
 
+
+    result->allowMessage = yes;
+
+    /* mssgFilt is a simple error filter that provides minimal information
+       to callback functions, and includes the message buffer in LibTidy's
+       configured localization.
+     */
+    if ( doc->mssgFilt )
+    {
+        result->allowMessage = result->allowMessage & doc->mssgFilt( tdoc, result->level, result->line, result->column, result->messageOutput );
+    }
+
+    /* mssgCallback is intended to allow LibTidy users to localize messages
+       via their own means by providing a key and the parameters to fill it. */
+    if ( doc->mssgCallback )
+    {
+        TidyDoc tdoc = tidyImplToDoc( doc );
+        va_copy(args_copy, args);
+        result->allowMessage = result->allowMessage & doc->mssgCallback( tdoc, result->level, result->line, result->column, result->messageKey, args_copy );
+        va_end(args_copy);
+    }
+
+    /* mssgMessageCallback is the newest interface to interrogate Tidy's
+       emitted messages. */
+    if ( doc->mssgMessageCallback )
+    {
+        result->allowMessage = result->allowMessage & doc->mssgMessageCallback( tidyImplToMessage(result) );
+    }
 
     return result;
 }
