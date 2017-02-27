@@ -391,6 +391,8 @@ ctmbstr TY_(getMessageOutput)( TidyMessageImpl message )
 
 struct printfArg {
     TidyFormatParameterType type;  /* type of the argument    */
+    int formatStart;               /* where the format starts */
+    int formatLength;              /* length of the format    */
     union {                        /* the argument            */
         int i;
         unsigned int ui;
@@ -412,8 +414,9 @@ static struct printfArg* BuildArgArray( TidyDocImpl *doc, const char *fmt, va_li
     int number = 0;
     int cn = -1;
     int i = 0;
+    int pos = -1;
     const char* p;
-    char  c;
+    char c;
     struct printfArg* nas;
     
     /* first pass: determine number of valid % to allocate space. */
@@ -451,17 +454,20 @@ static struct printfArg* BuildArgArray( TidyDocImpl *doc, const char *fmt, va_li
     }
     
     
-    /* second pass: set nas[].type. */
+    /* second pass: set nas[].type and location. */
     
     p = fmt;
     while( ( c = *p++ ) != 0 )
     {
+        
+        pos++;
+        
         if( c != '%' )
             continue;
         
         if( ( c = *p++ ) == '%' )
             continue; /* skip %% case */
-        
+
         
         /* width -- width via parameter */
         if (c == '*')
@@ -587,6 +593,10 @@ static struct printfArg* BuildArgArray( TidyDocImpl *doc, const char *fmt, va_li
                 break;
         }
         
+        /* position */
+        nas[cn].formatStart = pos;
+        nas[cn].formatLength = (p - fmt) - pos;
+
         /* Something's not right. */
         if( nas[ cn ].type == tidyFormatType_UNKNOWN )
         {
