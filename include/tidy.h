@@ -716,8 +716,8 @@ TIDY_EXPORT ctmbstr TIDY_CALL tidyGetArgFormat( TidyMessage tmessage, TidyMessag
 
 
 /**
- *  Returns the string value of the given message argument. Numeric types will
- *  be converted to a string if necessary.
+ *  Returns the string value of the given message argument. An assertion
+ *  will be generated if the argument type is not a string.
  */
 TIDY_EXPORT ctmbstr TIDY_CALL tidyGetArgValueString( TidyMessage tmessage, TidyMessageArgument* arg );
 

@@ -1538,7 +1538,17 @@ static Bool reportCallback(TidyMessage tmessage)
         arg = tidyGetNextMessageArgument( tmessage, &pos );
         messageType = tidyGetArgType( tmessage, &arg );
         messageFormat = tidyGetArgFormat( tmessage, &arg );
-        printf( "  Type = %u, Format = %s\n", messageType, messageFormat );
+        printf( "  Type = %u, Format = %s, Value = ", messageType, messageFormat );
+        
+        switch (messageType)
+        {
+            case tidyFormatType_STRING:
+                printf("%s\n", tidyGetArgValueString( tmessage, &arg ));
+                break;
+    
+            default:
+                printf("%s", "unknown so far\n");
+        }
     }
     
     

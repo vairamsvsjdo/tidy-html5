@@ -140,8 +140,8 @@ ctmbstr TY_(getArgFormat)( TidyMessageImpl message, TidyMessageArgument* arg );
 
 
 /**
- *  Returns the string value of the given message argument. Numeric types will
- *  be converted to a string if necessary.
+ *  Returns the string value of the given message argument. An assertion
+ *  will be generated if the argument type is not a string.
  */
 ctmbstr TY_(getArgValueString)( TidyMessageImpl message, TidyMessageArgument* arg );
 

@@ -461,7 +461,11 @@ ctmbstr TY_(getArgFormat)( TidyMessageImpl message, TidyMessageArgument* arg )
 
 ctmbstr TY_(getArgValueString)( TidyMessageImpl message, TidyMessageArgument* arg )
 {
-    return NULL;
+    int argNum = (int)*arg;
+    assert( argNum <= message.argcount );
+    assert( message.arguments[argNum].type == tidyFormatType_STRING);
+    
+    return message.arguments[argNum].u.s;
 }
 
 
@@ -502,7 +506,7 @@ double TY_(getArgDouble)( TidyMessageImpl message, TidyMessageArgument* arg )
  ** given. Parameter `rv` will return with the count of zero or more
  ** parameters if successful, else -1.
  **
- ** We'll also be sure to use the documents allocator if specified, thus
+ ** We'll also be sure to use the document's allocator if specified, thus
  ** the requirement to pass in a TidyDocImpl.
  */
 static struct printfArg* BuildArgArray( TidyDocImpl *doc, ctmbstr fmt, va_list ap, int* rv )
