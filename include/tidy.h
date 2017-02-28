@@ -101,6 +101,11 @@ opaque_type( TidyAttr );
 */
 opaque_type( TidyMessage );
 
+/** @struct TidyMessageArgument
+**  Opaque message argument datatype
+*/
+opaque_type( TidyMessageArgument );
+
 /** @} end Opaque group */
 
 

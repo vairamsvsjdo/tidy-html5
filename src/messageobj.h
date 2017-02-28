@@ -108,7 +108,25 @@ ctmbstr TY_(getMessageOutput)( TidyMessageImpl message );
 
 
 /** @} */
+/** @name Report Arguments Interrogation API */
+/** @{ */
+
+/**
+ *  Initializes the TidyIterator to point to the first item in the message's
+ *  argument. Use `TY_(getNextMEssageArgument)` to get an opaque instance of
+ *  `TidyMessageArgument` for which the subsequent interrogators will be of use.
+ */
+TidyIterator TY_(getMessageArguments)( TidyMessageImpl message );
+
+/**
+ *  Returns the next `TidyMessageArgument`, which can be interrogated with
+ *  the API, and advances the iterator.
+ */
+TidyMessageArgument TY_(getNextMessageArgument)( TidyMessageImpl message, TidyIterator* iter );
+
+
 
 
 /** @} */
+
 #endif /* messageobj_h */

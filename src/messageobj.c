@@ -409,14 +409,22 @@ struct printfArg {
     } u;
 };
 
-static struct printfArg* BuildArgArray( TidyDocImpl *doc, const char *fmt, va_list ap, int* rv )
+/** Returns a pointer to an allocated array of `printfArg` given a format
+ ** string and a va_list, or NULL if not successful or no parameters were
+ ** given. Parameter `rv` will return with the count of zero or more
+ ** parameters if successful, else -1.
+ **
+ ** We'll also be sure to use the documents allocator if specified, thus
+ ** the requirement to pass in a TidyDocImpl.
+ */
+static struct printfArg* BuildArgArray( TidyDocImpl *doc, ctmbstr fmt, va_list ap, int* rv )
 {
-    int number = 0;
-    int cn = -1;
-    int i = 0;
-    int pos = -1;
-    const char* p;
-    char c;
+    int number = 0; /* the quantity of valid arguments found; returned as rv. */
+    int cn = -1;    /* keeps track of which parameter index is current. */
+    int i = 0;      /* typical index. */
+    int pos = -1;   /* starting position of current argument. */
+    const char* p;  /* current position in format string. */
+    char c;         /* current character. */
     struct printfArg* nas;
     
     /* first pass: determine number of valid % to allocate space. */
@@ -459,16 +467,14 @@ static struct printfArg* BuildArgArray( TidyDocImpl *doc, const char *fmt, va_li
     p = fmt;
     while( ( c = *p++ ) != 0 )
     {
-        
-        pos++;
-        
         if( c != '%' )
             continue;
         
         if( ( c = *p++ ) == '%' )
             continue; /* skip %% case */
 
-        
+        pos = p - fmt - 2; /* p already incremented twice */
+
         /* width -- width via parameter */
         if (c == '*')
         {
