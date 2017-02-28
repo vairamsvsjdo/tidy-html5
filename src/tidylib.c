@@ -777,6 +777,62 @@ ctmbstr TIDY_CALL tidyGetMessageOutput( TidyMessage tmessage )
     return TY_(getMessageOutput)(*message);
 }
 
+TidyIterator TIDY_CALL tidyGetMessageArguments( TidyMessage tmessage )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getMessageArguments)(*message);
+}
+
+TidyMessageArgument TIDY_CALL tidyGetNextMessageArgument( TidyMessage tmessage, TidyIterator* iter )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getNextMessageArgument)(*message, iter);
+}
+
+TidyFormatParameterType TIDY_CALL tidyGetArgType( TidyMessage tmessage, TidyMessageArgument* arg )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getArgType)(*message, arg);
+}
+
+ctmbstr TIDY_CALL tidyGetArgFormat( TidyMessage tmessage, TidyMessageArgument* arg )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getArgFormat)(*message, arg);
+}
+
+ctmbstr TIDY_CALL tidyGetArgValueString( TidyMessage tmessage, TidyMessageArgument* arg )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getArgValueString)(*message, arg);
+}
+
+uint TIDY_CALL tidyGetArgValueUInt( TidyMessage tmessage, TidyMessageArgument* arg )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getArgValueUInt)(*message, arg);
+}
+
+int TIDY_CALL tidyGetArgValueInt( TidyMessage tmessage, TidyMessageArgument* arg )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getArgValueInt)(*message, arg);
+}
+
+char TIDY_CALL tidyGetArgValueChar( TidyMessage tmessage, TidyMessageArgument* arg )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getArgValueChar)(*message, arg);
+}
+
+double TIDY_CALL tidyGetArgDouble( TidyMessage tmessage, TidyMessageArgument* arg )
+{
+    TidyMessageImpl *message = tidyMessageToImpl(tmessage);
+    return TY_(getArgDouble)(*message, arg);
+}
+
+
+
 
 #if 0   /* Not yet */
 int         tidySetContentOutputSink( TidyDoc tdoc, TidyOutputSink* outp )

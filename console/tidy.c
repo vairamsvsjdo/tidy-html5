@@ -1522,9 +1522,25 @@ static void unknownOption( uint c )
  */
 static Bool reportCallback(TidyMessage tmessage)
 {
-#if 0
+#if 1
+    TidyIterator pos;
+    TidyMessageArgument arg;
+    TidyFormatParameterType messageType;
+
     ctmbstr output = tidyGetMessageOutput( tmessage );
     printf("FILTER: %s\n", output);
+    
+    /* loop through the arguments, if any, and print their details */
+    pos = tidyGetMessageArguments( tmessage );
+    while ( pos )
+    {
+        arg = tidyGetNextMessageArgument( tmessage, &pos );
+        messageType = tidyGetArgType( tmessage, &arg );
+        
+        printf( "  Type = %u\n", messageType );
+    }
+    
+    
 
     return no; /* suppress LibTidy's own output of this message */
 #else

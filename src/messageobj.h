@@ -119,11 +119,58 @@ ctmbstr TY_(getMessageOutput)( TidyMessageImpl message );
 TidyIterator TY_(getMessageArguments)( TidyMessageImpl message );
 
 /**
- *  Returns the next `TidyMessageArgument`, which can be interrogated with
- *  the API, and advances the iterator.
+ *  Returns the next `TidyMessageArgument`, for the given message, which can
+ *  then be interrogated with the API, and advances the iterator.
  */
 TidyMessageArgument TY_(getNextMessageArgument)( TidyMessageImpl message, TidyIterator* iter );
 
+
+/**
+ *  Returns the `TidyFormatParameterType` of the given message argument.
+ */
+TidyFormatParameterType TY_(getArgType)( TidyMessageImpl message, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the format specifier of the given message argument.
+ */
+ctmbstr TY_(getArgFormat)( TidyMessageImpl message, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the string value of the given message argument. Numeric types will
+ *  be converted to a string if necessary.
+ */
+ctmbstr TY_(getArgValueString)( TidyMessageImpl message, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the unsigned integer value of the given message argument. An
+ *  assertion will be generated if the argument type is not an unsigned
+ *  integer.
+ */
+uint TY_(getArgValueUInt)( TidyMessageImpl message, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the integer value of the given message argument. An assertion
+ *  will be generated if the argument type is not an integer.
+ */
+int TY_(getArgValueInt)( TidyMessageImpl message, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the char value of the given message argument. An assertion
+ *  will be generated if the argument type is not a char.
+ */
+char TY_(getArgValueChar)( TidyMessageImpl message, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the double value of the given message argument. An assertion
+ *  will be generated if the argument type is not a double.
+ */
+double TY_(getArgDouble)( TidyMessageImpl message, TidyMessageArgument* arg );
 
 
 

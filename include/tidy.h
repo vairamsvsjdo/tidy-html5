@@ -681,6 +681,74 @@ TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageOutputDefault( TidyMessage tmessage 
 TIDY_EXPORT ctmbstr TIDY_CALL tidyGetMessageOutput( TidyMessage tmessage );
 
 
+/***************************
+** TidyMessageCallback Arguments API
+** When using `TidyMessageCallback` you will be supplied with a valid
+** TidyMessage object, which may have arguments that can be interrogated
+** with this API.
+****************************/
+    
+/**
+ *  Initializes the TidyIterator to point to the first item in the message's
+ *  argument. Use `TY_(getNextMEssageArgument)` to get an opaque instance of
+ *  `TidyMessageArgument` for which the subsequent interrogators will be of use.
+ */
+TIDY_EXPORT TidyIterator TIDY_CALL tidyGetMessageArguments( TidyMessage tmessage );
+
+/**
+ *  Returns the next `TidyMessageArgument`, which can be interrogated with
+ *  the API, and advances the iterator.
+ */
+TIDY_EXPORT TidyMessageArgument TIDY_CALL tidyGetNextMessageArgument( TidyMessage tmessage, TidyIterator* iter );
+
+/**
+ *  Returns the `TidyFormatParameterType` of the given message argument.
+ */
+TIDY_EXPORT TidyFormatParameterType TIDY_CALL tidyGetArgType( TidyMessage tmessage, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the format specifier of the given message argument.
+ */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetArgFormat( TidyMessage tmessage, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the string value of the given message argument. Numeric types will
+ *  be converted to a string if necessary.
+ */
+TIDY_EXPORT ctmbstr TIDY_CALL tidyGetArgValueString( TidyMessage tmessage, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the unsigned integer value of the given message argument. An
+ *  assertion will be generated if the argument type is not an unsigned
+ *  integer.
+ */
+TIDY_EXPORT uint TIDY_CALL tidyGetArgValueUInt( TidyMessage tmessage, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the integer value of the given message argument. An assertion
+ *  will be generated if the argument type is not an integer.
+ */
+TIDY_EXPORT int TIDY_CALL tidyGetArgValueInt( TidyMessage tmessage, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the char value of the given message argument. An assertion
+ *  will be generated if the argument type is not a char.
+ */
+TIDY_EXPORT char TIDY_CALL tidyGetArgValueChar( TidyMessage tmessage, TidyMessageArgument* arg );
+
+
+/**
+ *  Returns the double value of the given message argument. An assertion
+ *  will be generated if the argument type is not a double.
+ */
+TIDY_EXPORT double TIDY_CALL tidyGetArgDouble( TidyMessage tmessage, TidyMessageArgument* arg );
+
+    
 /****************
    Printing
 ****************/

@@ -15,7 +15,7 @@
 
 
 /*********************************************************************
- * BuildArgArray Support - forward declarations
+ * BuildArgArray Support - declarations and forward declarations
  *********************************************************************/
 
 
@@ -25,7 +25,26 @@
 **  Windows doesn't support modern positional arguments, Tidy doesn't
 **  either.
 */
-struct printfArg;
+struct printfArg {
+    TidyFormatParameterType type;  /* type of the argument    */
+    int formatStart;               /* where the format starts */
+    int formatLength;              /* length of the format    */
+    union {                        /* the argument            */
+        int i;
+        unsigned int ui;
+        int32_t i32;
+        uint32_t ui32;
+        int64_t ll;
+        uint64_t ull;
+        double d;
+        const char *s;
+        size_t *ip;
+#ifdef WIN32
+        const WCHAR *ws;
+#endif
+    } u;
+};
+
 
 
 /** Returns a pointer to an allocated array of `printfArg` given a format
@@ -383,31 +402,96 @@ ctmbstr TY_(getMessageOutput)( TidyMessageImpl message )
 
 
 /*********************************************************************
+ * Message Argument Interrogation
+ *********************************************************************/
+
+
+TidyIterator TY_(getMessageArguments)( TidyMessageImpl message )
+{
+    if (message.argcount > 0)
+        return (TidyIterator) (size_t)1;
+    else
+        return (TidyIterator) (size_t)0;
+}
+
+TidyMessageArgument TY_(getNextMessageArgument)( TidyMessageImpl message, TidyIterator* iter )
+{
+    size_t item = 0;
+    size_t itemIndex;
+    assert( iter != NULL );
+    
+    itemIndex = (size_t)*iter;
+    
+    if ( itemIndex >= 1 && itemIndex <= message.argcount )
+    {
+        item = itemIndex - 1;
+        itemIndex++;
+    }
+    
+    /* Just as TidyIterator is really just a dumb, one-based index, the
+       TidyMessageArgument is really just a dumb, zero-based index; however
+       this type of iterator and opaque interrogation is simply how Tidy
+       does things. */
+    *iter = (TidyIterator)( itemIndex <= message.argcount ? itemIndex : (size_t)0 );
+    return (TidyMessageArgument)item;
+}
+
+
+TidyFormatParameterType TY_(getArgType)( TidyMessageImpl message, TidyMessageArgument* arg )
+{
+    int argNum = (int)*arg;
+    assert( argNum <= message.argcount );
+    
+    return message.arguments[argNum].type;
+}
+
+
+ctmbstr TY_(getArgFormat)( TidyMessageImpl message, TidyMessageArgument* arg )
+{
+    int argNum = (int)*arg;
+    assert( argNum <= message.argcount );
+    
+    return NULL;
+}
+
+
+ctmbstr TY_(getArgValueString)( TidyMessageImpl message, TidyMessageArgument* arg )
+{
+    return NULL;
+}
+
+
+uint TY_(getArgValueUInt)( TidyMessageImpl message, TidyMessageArgument* arg )
+{
+    return 0;
+}
+
+
+int TY_(getArgValueInt)( TidyMessageImpl message, TidyMessageArgument* arg )
+{
+    return 0;
+}
+
+
+char TY_(getArgValueChar)( TidyMessageImpl message, TidyMessageArgument* arg )
+{
+    return '0';
+}
+
+
+double TY_(getArgDouble)( TidyMessageImpl message, TidyMessageArgument* arg )
+{
+    return 0.0f;
+}
+
+
+
+/*********************************************************************
  * BuildArgArray support
  * Adapted loosely from Mozilla `prprf.c`, Mozilla Public License:
  *   - https://www.mozilla.org/en-US/MPL/2.0/
  *********************************************************************/
 
-
-struct printfArg {
-    TidyFormatParameterType type;  /* type of the argument    */
-    int formatStart;               /* where the format starts */
-    int formatLength;              /* length of the format    */
-    union {                        /* the argument            */
-        int i;
-        unsigned int ui;
-        int32_t i32;
-        uint32_t ui32;
-        int64_t ll;
-        uint64_t ull;
-        double d;
-        const char *s;
-        size_t *ip;
-#ifdef WIN32
-        const WCHAR *ws;
-#endif
-    } u;
-};
 
 /** Returns a pointer to an allocated array of `printfArg` given a format
  ** string and a va_list, or NULL if not successful or no parameters were
