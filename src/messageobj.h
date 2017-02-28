@@ -132,7 +132,9 @@ TidyFormatParameterType TY_(getArgType)( TidyMessageImpl message, TidyMessageArg
 
 
 /**
- *  Returns the format specifier of the given message argument.
+ *  Returns the format specifier of the given message argument. The memory for
+ *  this string is cleared upon termination of the callback, so do be sure to
+ *  make your own copy.
  */
 ctmbstr TY_(getArgFormat)( TidyMessageImpl message, TidyMessageArgument* arg );
 

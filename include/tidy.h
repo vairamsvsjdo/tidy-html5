@@ -708,7 +708,9 @@ TIDY_EXPORT TidyFormatParameterType TIDY_CALL tidyGetArgType( TidyMessage tmessa
 
 
 /**
- *  Returns the format specifier of the given message argument.
+ *  Returns the format specifier of the given message argument. The memory for
+ *  this string is cleared upon termination of the callback, so do be sure to
+ *  make your own copy.
  */
 TIDY_EXPORT ctmbstr TIDY_CALL tidyGetArgFormat( TidyMessage tmessage, TidyMessageArgument* arg );
 

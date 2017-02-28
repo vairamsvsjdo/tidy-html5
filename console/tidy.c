@@ -1526,6 +1526,7 @@ static Bool reportCallback(TidyMessage tmessage)
     TidyIterator pos;
     TidyMessageArgument arg;
     TidyFormatParameterType messageType;
+    ctmbstr messageFormat;
 
     ctmbstr output = tidyGetMessageOutput( tmessage );
     printf("FILTER: %s\n", output);
@@ -1536,8 +1537,8 @@ static Bool reportCallback(TidyMessage tmessage)
     {
         arg = tidyGetNextMessageArgument( tmessage, &pos );
         messageType = tidyGetArgType( tmessage, &arg );
-        
-        printf( "  Type = %u\n", messageType );
+        messageFormat = tidyGetArgFormat( tmessage, &arg );
+        printf( "  Type = %u, Format = %s\n", messageType, messageFormat );
     }
     
     

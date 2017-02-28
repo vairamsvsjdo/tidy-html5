@@ -25,10 +25,14 @@
 **  Windows doesn't support modern positional arguments, Tidy doesn't
 **  either.
 */
+
+#define FORMAT_LENGTH 21
+
 struct printfArg {
     TidyFormatParameterType type;  /* type of the argument    */
     int formatStart;               /* where the format starts */
     int formatLength;              /* length of the format    */
+    char format[FORMAT_LENGTH];    /* buffer for the format   */
     union {                        /* the argument            */
         int i;
         unsigned int ui;
@@ -451,7 +455,7 @@ ctmbstr TY_(getArgFormat)( TidyMessageImpl message, TidyMessageArgument* arg )
     int argNum = (int)*arg;
     assert( argNum <= message.argcount );
     
-    return NULL;
+    return message.arguments[argNum].format;
 }
 
 
@@ -683,9 +687,21 @@ static struct printfArg* BuildArgArray( TidyDocImpl *doc, ctmbstr fmt, va_list a
                 break;
         }
         
-        /* position */
+        /* position and format */
         nas[cn].formatStart = pos;
         nas[cn].formatLength = (p - fmt) - pos;
+        
+        /* the format string exceeds the buffer length */
+        if ( nas[cn].formatLength >= FORMAT_LENGTH )
+        {
+            *rv = -1;
+            break;
+        }
+        else
+        {
+            strncpy(nas[cn].format, fmt + nas[cn].formatStart, nas[cn].formatLength);
+        }
+        
 
         /* Something's not right. */
         if( nas[ cn ].type == tidyFormatType_UNKNOWN )
