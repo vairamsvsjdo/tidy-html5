@@ -56,6 +56,7 @@ Tidy supports localization, and welcomes translations into various languages. Pl
   [7]: https://github.com/htacg/tidy-html5/issues
   [8]: https://lists.w3.org/Archives/Public/html-tidy/
   [9]: http://api.html-tidy.org/
+  [10]: https://www.visualstudio.com/
 
 
 ## History
